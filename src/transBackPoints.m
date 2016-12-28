@@ -1,5 +1,5 @@
 function [transPts] = transBackPoints(pts, refP, refOr)
-% rotate back the set of points pts according to the reference point refP and its orientation refOr
+% transform back the set of points pts according to the reference point refP and its orientation refOr
 
 % points are assumed to be relative to point (0,0) already
 
@@ -12,6 +12,9 @@ rotation_angle = refOr;
 R = [cos(rotation_angle), -sin(rotation_angle); sin(rotation_angle) cos(rotation_angle)];
 % rotate points
 transPts = (R*pts')';
+
+% place points after refP
+transPts = transPts + repmat(refP,size(transPts,1),1);
 
 end
 

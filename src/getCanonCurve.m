@@ -30,16 +30,10 @@ end
 
 
 % get orientation of the first point
-orVec = fragPts(1+gapSize,:) - fragPts(1,:);
-orVec = orVec/norm(orVec);
-% get angle between the orientation vector and the x axis
-or = atan2(orVec(2),orVec(1));
-if or<0
-    or = or + 2*pi;
-end
+firstOr = getOrTwoPts(fragPts(1,:), fragPts(1+gapSize,:));
 
 % transform points to be relative to the frame of the first point
-[fragPts, ~] = transPoints(fragPts, [], fragPts(1,:), or);
+[fragPts, ~] = transPoints(fragPts, [], fragPts(1,:), firstOr);
 
 % mirror the curve down.
 % if the end point is in the half space above the first
@@ -52,14 +46,7 @@ if lastPoint(2) > 0
 end
 
 % get orientation of last point
-orVec = fragPts(end-gapSize,:) - fragPts(end,:);
-orVec = orVec/norm(orVec);
-% get angle between the orientation vector and the x axis
-or = atan2(orVec(2),orVec(1));
-if or<0
-    or = or + 2*pi;
-end
-lastOr = or;
+lastOr = getOrTwoPts(fragPts(end,:), fragPts(end-gapSize,:));
 
 pts = fragPts;
 s = true;

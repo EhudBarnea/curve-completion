@@ -1,6 +1,9 @@
 function [] = getMeanCurveBetweenInducers(frags, params)
 % For each two inducers show all curves and mean curve
 
+% to do - most of the computation has been moved to "completeCurve".
+% Update this function to use it instead.
+
 numCurveRepPts = 5;
 vis = true;
 minDist = 3;
@@ -104,8 +107,8 @@ for x=relMinX:10:relMaxX
                 title(['Num shown curves = ' num2str(min(40,numFrags)) '   num Diff Imgs=' num2str(numDiffImgs)])
                 
                 export_fig([outFolder '/curves_between_inducers/c_' num2str(endPoint(1)) '_' num2str(endPoint(2)) '_' num2str(ob) '.png']);
+                close all;
             end
-            close all;
         end
     end
 end

@@ -226,10 +226,10 @@ for i=1:size(indPairs,1)
     
     % get completion curve (image coordinates)
     completion = meanCurve;
-    % rotate back to the starting point's original orientation
+    % rotate back to the starting point's original orientation and return to image location
     completion = transBackPoints(completion, inducers(ind1,:), inducerOrs(ind1));
     % return to image location
-    completion = completion + repmat(inducers(ind1,:),size(completion,1),1);
+%     completion = completion + repmat(inducers(ind1,:),size(completion,1),1);
     % flip y axis (so y axis points down)
     completion(:,2) = size(img,2) - completion(:,2) + 1;
     

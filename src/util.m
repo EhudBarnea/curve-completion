@@ -40,7 +40,8 @@ params.numOrBins = 8;
 params.orBinSize = 2*pi/params.numOrBins;
 
 
-%%
+%% train
+
 collectCurveFrags(params);
 
 if ~exist('frags')
@@ -48,7 +49,8 @@ if ~exist('frags')
 end
 getMeanCurveBetweenInducers(frags, params);
 
-%%
+%% run completion demo
+
 imgNum = 13; % car
 % imgNum = 4; % kid
 % imgNum = 24; % duck
@@ -58,4 +60,8 @@ if ~exist('frags')
     load([params.outFolder 'all_frags/frags']);
 end
 
-demo_completion_single(frags, imgNum, params);
+demoCompletionSingle(frags, imgNum, params);
+
+
+
+
