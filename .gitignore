@@ -5,7 +5,7 @@ misc/*
 
 # export_fig library
 src/export_fig/*
-!src/export_fig/README.md
+!src/export_fig/where_to_get.md
 
 # Matlab temp/backup files
 *.asv
