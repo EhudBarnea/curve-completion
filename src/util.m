@@ -41,10 +41,21 @@ params.orBinSize = 2*pi/params.numOrBins;
 
 
 %%
-
 collectCurveFrags(params);
 
 if ~exist('frags')
     load([params.outFolder 'all_frags/frags']);
 end
 getMeanCurveBetweenInducers(frags, params);
+
+%%
+imgNum = 13; % car
+% imgNum = 4; % kid
+% imgNum = 24; % duck
+% imgNum = 1; % plane
+
+if ~exist('frags')
+    load([params.outFolder 'all_frags/frags']);
+end
+
+demo_completion_single(frags, imgNum, params);

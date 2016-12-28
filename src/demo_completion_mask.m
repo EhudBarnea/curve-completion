@@ -1,6 +1,10 @@
 
 % Complete curves in an image (after marking an occluder)
 
+% this code is obsolete and needs to be updated to include orientations and
+% other small changes.
+
+
 imgNum = 13; % car
 % imgNum = 4; % kid
 % imgNum = 24; % duck
@@ -8,34 +12,19 @@ imgNum = 13; % car
 
 showEdgeImg = true;
 
-datasetFolder = 'curve fragments dataset/CFGD_release/';
-imgsFolder = [datasetFolder 'img/'];
 
-cd('/Users/ehud/Dropbox/Research/curve completion');
-
-numCurveRepPts = 3;
+numCurveRepPts = 5;
 
 if ~exist('frags')
-    load('sampled_frags');
-    load('numSamples_frags');
+    load([params.outFolder 'all_frags/frags']);
 end
 
-binSize = 1; % in pixels
-% size relative to reference point (adjusted to be a multiple of binSize)
-relMaxX = 200;
-relMaxY = 200;
-relMaxX = floor(relMaxX/binSize)*binSize;
-relMaxY = floor(relMaxY/binSize)*binSize;
-relMinX = -relMaxX;
-relMinY = -relMaxY;
-
-files = dir([imgsFolder '*jpg']);
 
 close all
 
-imgName = files(imgNum).name;
+imgName = imgNames{imgNum};
 baseName = imgName(1:end-4);
-img = imread([imgsFolder imgName]);
+img = imread([params.imgsFolder imgName]);
 imgRGB = img;
 % img = rgb2gray(img);
 img = img(:,:,1);
