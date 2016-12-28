@@ -1,48 +1,67 @@
-function [pts] = getCanonCurve(c, p1, p2)
+function [pts, s, lastOr] = getCanonCurve(c, p1, p2)
 
 % get curve points pts (in cannonical pose) from curve c relative to curve
 % start p1 and until the end p2. p1 can be after p2.
 
+% s - whether the calculation succeeded. It is possible that there aren't
+% enough points to calculate the orientation.
+
+% lastOr - orientation of last point
+
 % calculate orientation as the vector connecting a point
-% to the next point (or a later point for smoother orientation)
-
+% to the point that is gapSize points away
 gapSize = 3;
-if p1 < size(c,1)
-    orVec = c(p1+gapSize,:) - c(p1,:);
-else % is last point
-    orVec = c(p1,:) - c(p1-1,:);
-end
-orVec = orVec/norm(orVec);
-if p2 < p1
-    % flip orientation vector if going from p2 to p1
-    orVec = -orVec;
-end
-% get angle between the orientation vector and the x axis
-or = atan2(orVec(2),orVec(1));
-or(or<0) = or(or<0) + 2*pi;
 
-
-% get curve fragment between p1 and p2 relative to p1 as a
-% reference. if p2 is before p1 flip the order of curve points
+% get points in curve fragment. if p2 is before p1 flip the order of points
 if p1 < p2
     fragPts = c(p1:p2,:); % fragment points
 else
     fragPts = c(p1:-1:p2,:); % fragment points (flipped)
 end
-[fragPts, ~] = transPoints(fragPts, [], c(p1,:), or);
-endPoint = fragPts(end,:);
+
+% make sure we have enough points to calculate orientations
+numPts = size(fragPts,1);
+if numPts < gapSize + 1
+    s = false;
+    pts = [];
+    lastOr = 0;
+    return;
+end
+
+
+% get orientation of the first point
+orVec = fragPts(1+gapSize,:) - fragPts(1,:);
+orVec = orVec/norm(orVec);
+% get angle between the orientation vector and the x axis
+or = atan2(orVec(2),orVec(1));
+if or<0
+    or = or + 2*pi;
+end
+
+% transform points to be relative to the frame of the first point
+[fragPts, ~] = transPoints(fragPts, [], fragPts(1,:), or);
 
 % mirror the curve down.
 % if the end point is in the half space above the first
 % point (Y>0 relative to the first point), mirror the curve
 % to the other side
-if endPoint(2) > 0
+lastPoint = fragPts(end,:);
+if lastPoint(2) > 0
     fragPts(:,2) = -fragPts(:,2);
-%     fragOrs = 2*pi - fragOrs;
-    endPoint = fragPts(end,:);
+    lastPoint = fragPts(end,:);
 end
 
+% get orientation of last point
+orVec = fragPts(end-gapSize,:) - fragPts(end,:);
+orVec = orVec/norm(orVec);
+% get angle between the orientation vector and the x axis
+or = atan2(orVec(2),orVec(1));
+if or<0
+    or = or + 2*pi;
+end
+lastOr = or;
 
 pts = fragPts;
+s = true;
 end
 
