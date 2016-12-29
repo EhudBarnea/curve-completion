@@ -51,16 +51,14 @@ getMeanCurveBetweenInducers(frags, params);
 
 %% run completion demo
 
-imgNum = 13; % car
-% imgNum = 4; % kid
-% imgNum = 24; % duck
-% imgNum = 1; % plane
 
 if ~exist('frags')
     load([params.outFolder 'all_frags/frags']);
 end
+ 
 
-demoCompletionSingle(frags, imgNum, params);
+%img = imread('a.png');
+demoCompletionSingle(frags, img, params);
 
 
 

@@ -1,4 +1,4 @@
-function [] = demoCompletionSingle(frags, imgNum, params)
+function [] = demoCompletionSingle(frags, img, params)
 % input two inducers from the user and complete a single curve between them
 
 
@@ -8,9 +8,6 @@ lineWidth = 3;
 
 % load and show image
 close all
-imgName = params.imgNames{imgNum};
-baseName = imgName(1:end-4);
-img = imread([params.imgsFolder imgName]);
 imgRGB = img;
 imshow(imgRGB);
 set(gcf,'position',get(0,'screensize'));
@@ -45,16 +42,16 @@ if isUsable
     imshow(imgRGB);
     %set(gcf,'position',get(0,'screensize'));
 
+    % draw completion
+    % scatter(c(:,1),c(:,2),7,'g','filled');
+    % hold on
+    line(c(:,1),c(:,2),'Color','g', 'LineWidth',lineWidth)
+    
     % draw inducers
     line([p1a(1) p1(1)], [p1a(2) p1(2)], 'LineWidth',lineWidth)
     hold on
     line([p2a(1) p2(1)], [p2a(2) p2(2)], 'LineWidth',lineWidth)
     hold on
-    
-    % draw completion
-    % scatter(c(:,1),c(:,2),7,'g','filled');
-    % hold on
-    line(c(:,1),c(:,2),'Color','g', 'LineWidth',lineWidth)
 else
     display('Completion not usable');
 end
