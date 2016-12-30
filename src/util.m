@@ -3,6 +3,7 @@
 
 
 addpath('export_fig/');
+addpath('kde2d/');
 
 params.datasetFolder = '../data/curve fragments dataset/CFGD_release/';
 params.curvesFolder = [params.datasetFolder 'GT_mat_CFGD_format/'];
@@ -56,10 +57,15 @@ if ~exist('frags')
     load([params.outFolder 'all_frags/frags']);
 end
  
-
 %img = imread('a.png');
 demoCompletionSingle(frags, img, params);
 
+%% show completions of all curves
 
 
+if ~exist('frags')
+    load([params.outFolder 'all_frags/frags']);
+end
+ 
+completeAllCurves(frags, params)
 

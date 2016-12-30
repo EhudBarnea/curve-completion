@@ -1,18 +1,21 @@
-function [c, isUsable, numFrags, fragCenters] = completeCurve(p1, or1, p2, or2, frags, params, vis)
+function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis)
 % complete curve between points p1,p2 with orientations or1,or2
 
 % output:
 % c - the completed curve (points)
 % isUsable - whether the data can be trusted but a good completion
-% numFrags - total number of fragments observed between the two inducers
-% fragCenters - center points of all fragments observed between the two inducers
+% out - output struct containing.
+% out.numFrags - total number of fragments observed between the two inducers
+% out.numDiffImgs - number of images from which the used fragments were taken from
+% out.fragCenters - center points of all fragments observed between the two inducers
 
-maxFragsToUse = 100;
+% maxFragsToUse = 100;
+maxFragsToUse = inf;
 maxFragsToShow = 10;
 numCurveRepPts = 5;
 
 c = [];
-fragCenters = [];
+out = [];
 
 % vis - visualize completion process
 if vis
@@ -87,7 +90,15 @@ end
 
 % number of different images with such seen curves
 numDiffImgs = sum(fragImgs);
-isUsable = numDiffImgs>2;
+% isUsable = numFragsToUse>=20 && numDiffImgs>=5;
+isUsable = numFragsToUse>=30;
+
+% prepare output struct
+out.fragCenters = fragCenters;
+out.numDiffImgs = numDiffImgs;
+out.numFrags = numFrags;
+out.endPointBin = endPointBin;
+out.endPointOrBin = endPointOrBin;
 
 % calculate mean curve
 %         coeff = pca(allRepPts);
