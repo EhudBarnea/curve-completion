@@ -1,11 +1,18 @@
-function [c, isUsable] = completeCurve(p1, or1, p2, or2, frags, params, vis)
+function [c, isUsable, numFrags, fragCenters] = completeCurve(p1, or1, p2, or2, frags, params, vis)
 % complete curve between points p1,p2 with orientations or1,or2
 
+% output:
+% c - the completed curve (points)
+% isUsable - whether the data can be trusted but a good completion
+% numFrags - total number of fragments observed between the two inducers
+% fragCenters - center points of all fragments observed between the two inducers
 
-numFragsToUse = 100;
+maxFragsToUse = 100;
 maxFragsToShow = 10;
 numCurveRepPts = 5;
 
+c = [];
+fragCenters = [];
 
 % vis - visualize completion process
 if vis
@@ -30,8 +37,8 @@ endPointBin(endPointBin>params.numBins) = params.numBins(1);
 endPointFrags = frags{endPointBin(1), endPointBin(2), endPointOrBin};
 
 numFrags = size(endPointFrags,1);
+numFragsToUse = min(numFrags, maxFragsToUse);
 if numFrags < 1
-    c = [];
     isUsable = false;
     return;
 end
@@ -40,11 +47,13 @@ end
 idx = randperm(numFrags);
 endPointFrags = endPointFrags(idx,:);
 
-allRepPts = zeros(numFrags,numCurveRepPts*2); % all curves' representative points
+allRepPts = zeros(numFragsToUse,numCurveRepPts*2); % all curves' representative points
 % times 2 because each point is x,y
 
+fragCenters = zeros(numFragsToUse, 2); % center points of all fragments
+
 fragImgs = false(params.numImgs,1); % images with such curves
-for i=1:min(numFrags, numFragsToUse)
+for i=1:numFragsToUse
     imgNum = endPointFrags(i,1);
     cNum = endPointFrags(i,2); % curve num
     fragP1 = endPointFrags(i,3);
@@ -66,6 +75,9 @@ for i=1:min(numFrags, numFragsToUse)
     repPts = getCurveEquiPoints(fragPts, numCurveRepPts);
     allRepPts(i,:) = reshape(repPts,1,numCurveRepPts*2);
     
+    % get frag center (for further statistics)
+    fragCenters(i,:) = getCurveEquiPoints(fragPts, 1);
+    
     % display
     if vis && i<=maxFragsToShow
         line(fragPts(:,1),fragPts(:,2));
@@ -79,7 +91,7 @@ isUsable = numDiffImgs>2;
 
 % calculate mean curve
 %         coeff = pca(allRepPts);
-meanPts = mean(allRepPts(1:min(numFrags, numFragsToUse),:),1);
+meanPts = mean(allRepPts,1);
 meanPts = reshape(meanPts, numCurveRepPts, 2);
 
 if vis
@@ -93,7 +105,7 @@ if vis
     scatter(endPoint(1),endPoint(2),7,'r','filled')
     axis equal
     axis([-200 200 -200 200])
-    title(['Num shown curves = ' num2str(min(maxFragsToShow,numFrags)) '   num Diff Imgs=' num2str(numDiffImgs)])
+    title(['Num shown curves = ' num2str(min(maxFragsToShow,numFragsToUse)) '   num Diff Imgs=' num2str(numDiffImgs)])
 end
 
 % mirror back curve
