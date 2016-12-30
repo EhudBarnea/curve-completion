@@ -34,7 +34,7 @@ or1 = getOrTwoPts(p1a, p1);
 or2 = getOrTwoPts(p2a, p2);
 
 % complete curve
-[c, isUsable] = completeCurve(p1, or1, p2, or2, frags, params);
+[c, isUsable] = completeCurve(p1, or1, p2, or2, frags, params, false);
 
 % draw completion
 if isUsable

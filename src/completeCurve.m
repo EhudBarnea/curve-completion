@@ -1,11 +1,16 @@
-function [c, isUsable] = completeCurve(p1, or1, p2, or2, frags, params)
+function [c, isUsable] = completeCurve(p1, or1, p2, or2, frags, params, vis)
 % complete curve between points p1,p2 with orientations or1,or2
 
 
-vis = true; % visualize curve in the coordinate system where p1=(0,0)
 numFragsToUse = 100;
 maxFragsToShow = 10;
 numCurveRepPts = 5;
+
+
+% vis - visualize completion process
+if vis
+    figure
+end
 
 % get p2 and or2 in relative to p1 and or1
 [endPoint, endPointOr] = transPoints(p2, or2, p1, or1);
@@ -100,6 +105,6 @@ end
 [meanPts] = transBackPoints(meanPts, p1, or1);
 c = [p1; meanPts; p2];
 
-numFrags
+% numFrags
 end
 
