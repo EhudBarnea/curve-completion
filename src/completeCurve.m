@@ -91,7 +91,7 @@ end
 % number of different images with such seen curves
 numDiffImgs = sum(fragImgs);
 % isUsable = numFragsToUse>=20 && numDiffImgs>=5;
-isUsable = numFragsToUse>=30;
+isUsable = numFragsToUse>=20;
 
 % prepare output struct
 out.fragCenters = fragCenters;

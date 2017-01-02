@@ -1,9 +1,6 @@
 function [] = completeAllCurves(frags, params)
 % For each possible inducer pair show all curves and mean curve
 
-minDist = 3;
-
-
 relMinX = params.relMinX;
 relMaxX = params.relMaxX;
 relMinY = params.relMinY;
@@ -14,14 +11,9 @@ relMaxY = params.relMaxY;
 p1 = [0,0];
 or1 = 0;
 
-for x=100:10:relMaxX%relMinX:10:relMaxX
+for x=relMinX:10:-10%relMinX:10:relMaxX
     for y=relMinY:10:0 % end at 0, because we mirror curves in y>0
         p2 = [x,y]
-        
-        % ignore too short curves (there's too many of them)
-        if x<=minDist && x>=-minDist && y<=minDist && y>=-minDist
-            continue;
-        end
         
         for ob=1:params.numOrBins
             

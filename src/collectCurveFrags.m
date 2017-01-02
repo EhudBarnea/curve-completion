@@ -30,7 +30,6 @@ outFolder = params.outFolder;
 
 parpool(32); % sge59
 
-
 % for i = 1:1:numImgs
 parfor i = 1:numImgs
     display([num2str(i) ' started']);
@@ -38,7 +37,6 @@ parfor i = 1:numImgs
     frags = cell(numBins(1), numBins(2), numOrBins);
     
     % keep the number of samples (edge fragments) for each end point.
-    % this is indexed by [y,x] for visualization
     numSamples = zeros(numBins(1), numBins(2), numOrBins);
     
     % load image curves
@@ -76,7 +74,7 @@ parfor i = 1:numImgs
                 
                 % check if curve fragment is too short
                 if norm(endPoint) < minDist
-                    continue;
+                    %continue;
                 end
                 
                 % check if end point is off limits
@@ -86,17 +84,12 @@ parfor i = 1:numImgs
                 
                 % get end point bin
                 endPointBin = floor((endPoint - [relMinX, relMinY])/binSize) + 1;
-                if endPointBin(1) > size(numSamples,2) || endPointBin(2) > size(numSamples,1)
+                if endPointBin(1) > size(frags,1) || endPointBin(2) > size(frags,2)
                     continue;
                 end
                 
                 % get end point orientation bin
                 endPointOrBin = getOrBin(endPointOr, orBinSize, numOrBins);
-                
-                % keep number of samples (in image coordinates (row/col) for
-                % visualization)
-                flippedY =  size(numSamples,2) - endPointBin(2) + 1;
-                numSamples(flippedY, endPointBin(1), endPointOrBin) = numSamples(flippedY, endPointBin(1), endPointOrBin) + 1;
                 
                 % place fragment in frags array according to the end point
                 frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2]];
@@ -115,7 +108,34 @@ parfor i = 1:numImgs
                 end
             end
         end
-
+    end
+    
+    % make sure each bin in frags contains only one fragment from each
+    % image curve. this is performed after adding all the fragments so that
+    % we could choose a fragment randomly from all those that come from the
+    % same curve. This can be changed to allow taking several fragments
+    % from a single contour if they are far enough from each other.
+    for x=1:numBins(1)
+        for y=1:numBins(2)
+            for z=1:numOrBins
+                f = frags{x,y,z};
+                if size(f,1) == 0
+                    continue;
+                end
+                diffCurves = unique(f(:,2));
+                numDiffCurves = length(diffCurves);
+                filtered = zeros(numDiffCurves,size(f,2));
+                for k=1:numDiffCurves
+                    % pick random fragment
+                    curveFrags = find(f(:,2)==diffCurves(k));
+                    pickedFrag = f(curveFrags(randi(length(curveFrags))),:);
+                    filtered(k,:) = pickedFrag;
+                end
+                
+                frags{x,y,z} = filtered;
+                numSamples(x,y,z) = numDiffCurves;
+            end
+        end
     end
     
     display([num2str(i) ' saving']);
@@ -124,7 +144,8 @@ parfor i = 1:numImgs
 end
 
 
-
+% combine the fragments from all the different images (each in its own
+% file) to a single structure
 frags = cell(numBins(1), numBins(2), numOrBins);
 numSamples = zeros(numBins(1), numBins(2), numOrBins);
 for i=1:1:numImgs

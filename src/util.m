@@ -41,14 +41,9 @@ params.numOrBins = 8;
 params.orBinSize = 2*pi/params.numOrBins;
 
 
-%% train
+%% train / collect data
 
 collectCurveFrags(params);
-
-if ~exist('frags')
-    load([params.outFolder 'all_frags/frags']);
-end
-getMeanCurveBetweenInducers(frags, params);
 
 %% run completion demo
 
@@ -68,4 +63,21 @@ if ~exist('frags')
 end
  
 completeAllCurves(frags, params)
+
+%% visualize number of samples
+
+if ~exist('frags')
+    load([params.outFolder 'all_frags/frags']);
+end
+for i=1:8
+    
+    % flip numSamples to image [y,x] coordinates
+    tmp = numSamples(:,:,i);
+    tmp = tmp';
+    tmp = flipud(tmp);
+    
+    imagesc(tmp>20);
+    export_fig([params.outFolder '/tmp/_numSamples' num2str(i) '.png']);
+    close all
+end
 
