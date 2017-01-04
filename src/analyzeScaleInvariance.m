@@ -1,15 +1,14 @@
-function [] = analyzeScaleInvariance(frags, params)
+function [] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
 % compare the center point statistics of curves that belong to inducer
 % pairs that are the same up to scale
 
-% directionfrom the first inducer at (0,0) to the second inducer
-endPointDirection = [4, -1];
+% endPointDirection - direction from the first inducer at (0,0) to the second inducer
+% endPointOr - orientation of the second inducer
 
-% orientation bin of end point
-endPointOrBin = 4;
-or2 = getOrFromBin(endPointOrBin, params.orBinSize);
 
-scaleOutFolder = [params.outFolder 'stats/scale_' num2str(endPointDirection(1)) '_' num2str(endPointDirection(2)) '_' num2str(endPointOrBin) '/'];
+or2 = endPointOr;
+
+scaleOutFolder = [params.outFolder 'stats/scale_' num2str(endPointDirection(1)) '_' num2str(endPointDirection(2)) '_' num2str(or2) '/'];
 mkdir(scaleOutFolder);
 
 % first inducer is always at point (0,0) looking right
@@ -34,7 +33,7 @@ for s=1:100 % loop over scales
         view(2)
         axis equal
         title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs)]);
-        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(endPointOrBin) '_centerD1.png']);
+        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(or2) '_centerD1.png']);
         close all
         
         % show centers point distribution small
@@ -43,7 +42,7 @@ for s=1:100 % loop over scales
         view(2)
         axis equal
         title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs)]);
-        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(endPointOrBin) '_centerD2.png']);
+        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(or2) '_centerD2.png']);
         close all
         
         % show center of completed curve
@@ -52,7 +51,7 @@ for s=1:100 % loop over scales
         axis equal
         axis([-200 200 -200 200])
         title(['num points = ' num2str(size(out.fragCenters,1))]);
-        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(endPointOrBin) '_center.png']);
+        export_fig([scaleOutFolder 'c_' num2str(x) '_' num2str(y) '_' num2str(or2) '_center.png']);
         close all
     end
 end

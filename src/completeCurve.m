@@ -32,12 +32,8 @@ if endPoint(2) > 0
     endPointOr = 2*pi - endPointOr;
 end
 
-endPointOrBin = getOrBin(endPointOr, params.orBinSize, params.numOrBins);
-
 % get relevant fragments
-endPointBin = floor((endPoint - [params.relMinX, params.relMinY])/params.binSize) + 1;
-endPointBin(endPointBin>params.numBins) = params.numBins(1);
-endPointFrags = frags{endPointBin(1), endPointBin(2), endPointOrBin};
+endPointFrags = getNearFrags(endPoint, endPointOr, frags, params);
 
 numFrags = size(endPointFrags,1);
 numFragsToUse = min(numFrags, maxFragsToUse);
@@ -90,15 +86,12 @@ end
 
 % number of different images with such seen curves
 numDiffImgs = sum(fragImgs);
-% isUsable = numFragsToUse>=20 && numDiffImgs>=5;
 isUsable = numFragsToUse>=20;
 
 % prepare output struct
 out.fragCenters = fragCenters;
 out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
-out.endPointBin = endPointBin;
-out.endPointOrBin = endPointOrBin;
 
 % calculate mean curve
 %         coeff = pca(allRepPts);
@@ -116,7 +109,7 @@ if vis
     scatter(endPoint(1),endPoint(2),7,'r','filled')
     axis equal
     axis([-200 200 -200 200])
-    title(['Num shown curves = ' num2str(min(maxFragsToShow,numFragsToUse)) '   num Diff Imgs=' num2str(numDiffImgs)])
+    title(['Num shown curves = ' num2str(min(maxFragsToShow,numFragsToUse)) '   Num used curves = ' num2str(numFragsToUse) '   num Diff Imgs=' num2str(numDiffImgs)])
 end
 
 % mirror back curve
@@ -131,3 +124,46 @@ c = [p1; meanPts; p2];
 % numFrags
 end
 
+
+function nearFrags = getNearFrags(endPoint, endPointOr, frags, params)
+    % Get all curve fragments near an end point. More specifically, those
+    % that are params.matchDist away from endPoint and with orientation
+    % params.matchOr away from endPointOr.
+
+    % get the box that bounds the circle of params.matchDist radius,
+    % centered at endPoint
+    boxX = [floor(endPoint(1)-params.matchDist), ceil(endPoint(1)+params.matchDist)];
+    boxY = [floor(endPoint(2)-params.matchDist), ceil(endPoint(2)+params.matchDist)];
+    
+    % move to frags array coordinates
+    boxX = (boxX - params.relMinX) / params.binSize + 1;
+    boxY = (boxY - params.relMinY) / params.binSize + 1;
+    
+    % make sure we don't go out of bounds
+    boxX(boxX<1) = 1;
+    boxY(boxY<1) = 1;
+    boxX(boxX>params.numBins(1)) = params.numBins(1);
+    boxY(boxY>params.numBins(2)) = params.numBins(2);
+    
+    % get relevant frags
+    relevantFrags = cat(1,frags{boxX(1):boxX(2),boxY(1):boxY(2),:});
+    
+    % filter the relevant frags
+    nearFrags = normRows(relevantFrags(:,5)-endPoint(1)) < params.matchDist & ...
+        normRows(relevantFrags(:,6)-endPoint(2)) < params.matchDist & ...
+        angularDist(relevantFrags(:,7), endPointOr) < params.matchOr;
+    nearFrags = relevantFrags(nearFrags,:);
+end
+
+
+function angDist = angularDist(or1, or2)
+    % calculate the angular distance between each value in the vector or1,
+    % and the scalar or2
+    angDist = mod(or1 - or2,2*pi);
+    angDist(angDist > pi) = 2*pi - angDist(angDist > pi);
+end
+
+function res = normRows(mat)
+    % calculate the norm of each row in mat
+    res = sqrt(sum(mat.^2,2));
+end

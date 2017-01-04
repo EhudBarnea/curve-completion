@@ -27,8 +27,7 @@ curvesFolder = params.curvesFolder;
 outFolder = params.outFolder;
 
 
-
-parpool(32); % sge59
+parpool(param.numParWorkers);
 
 % for i = 1:1:numImgs
 parfor i = 1:numImgs
@@ -92,7 +91,7 @@ parfor i = 1:numImgs
                 endPointOrBin = getOrBin(endPointOr, orBinSize, numOrBins);
                 
                 % place fragment in frags array according to the end point
-                frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2]];
+                frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2, endPoint(1), endPoint(2), endPointOr]];
                 
                 if debug
                     endPoint
@@ -163,6 +162,7 @@ for i=1:1:numImgs
     end
 end
 
+display('saving')
 save([outFolder 'all_frags/frags'],'frags','numSamples','-v7.3');
 display('done')
 

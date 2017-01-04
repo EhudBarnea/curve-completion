@@ -2,7 +2,7 @@ function [] = collectCurveFragsRand(params)
 % Collect curve fragments randomly
 % this part may need to be updated to work with the other parts
 
-% this code is obsolute and needs to be updated
+% this code doesn't work and needs to be updated
 
 % Accumulate all curve fragments into bins relative to a cannonical pose.
 % Sample curve fragments randomly.
