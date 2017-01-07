@@ -53,7 +53,7 @@ if isUsable
     line([p2a(1) p2(1)], [p2a(2) p2(2)], 'LineWidth',lineWidth)
     hold on
 else
-    display('Completion not usable');
+    disp('Completion not usable');
 end
 
 end

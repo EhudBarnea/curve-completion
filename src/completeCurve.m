@@ -9,7 +9,7 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 % out.numDiffImgs - number of images from which the used fragments were taken from
 % out.fragCenters - center points of all fragments observed between the two inducers
 
-% maxFragsToUse = 100;
+% maxFragsToUse = 30;
 maxFragsToUse = inf;
 maxFragsToShow = 10;
 numCurveRepPts = 5;

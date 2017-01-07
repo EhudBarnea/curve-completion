@@ -121,7 +121,7 @@ for y=box(1)-1:box(3)+1
 end
 inducers = double(inducers);
 if size(inducers,1) < 2
-    display(['Error - only ' num2str(size(inducers,1)) ' inducers'])
+    disp(['Error - only ' num2str(size(inducers,1)) ' inducers'])
 end
 
 % get inducer orientations.
@@ -200,7 +200,7 @@ for i=1:size(indPairs,1)
     
     numFrags = numel(endPointFrags);
     if numFrags < 1
-%         display(['No sample curves for pair' num2str(i)]);
+%         disp(['No sample curves for pair' num2str(i)]);
         continue;
     end
     

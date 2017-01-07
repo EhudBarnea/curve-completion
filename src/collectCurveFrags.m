@@ -31,7 +31,7 @@ parpool(param.numParWorkers);
 
 % for i = 1:1:numImgs
 parfor i = 1:numImgs
-    display([num2str(i) ' started']);
+    disp([num2str(i) ' started']);
     
     frags = cell(numBins(1), numBins(2), numOrBins);
     
@@ -52,7 +52,7 @@ parfor i = 1:numImgs
     % so there may be a gap between adjacent points.
     for j=1:length(curves)
         if mod(j,10) == 0
-            display([num2str(i) ' - ' num2str(j) '/' num2str(length(curves))]);
+            disp([num2str(i) ' - ' num2str(j) '/' num2str(length(curves))]);
         end
         
         % get curve
@@ -137,9 +137,9 @@ parfor i = 1:numImgs
         end
     end
     
-    display([num2str(i) ' saving']);
+    disp([num2str(i) ' saving']);
     parSave([outFolder 'all_frags/frags_from_arr_' num2str(i)], frags, numSamples)
-    display([num2str(i) ' done']);
+    disp([num2str(i) ' done']);
 end
 
 
@@ -148,7 +148,7 @@ end
 frags = cell(numBins(1), numBins(2), numOrBins);
 numSamples = zeros(numBins(1), numBins(2), numOrBins);
 for i=1:1:numImgs
-    display(i);
+    disp(i);
     data=load([outFolder 'all_frags/frags_from_arr_' num2str(i)],'frags','numSamples');
     imgFrags = data.frags;
     imgNumSamples = data.numSamples;
@@ -162,9 +162,9 @@ for i=1:1:numImgs
     end
 end
 
-display('saving')
+disp('saving')
 save([outFolder 'all_frags/frags'],'frags','numSamples','-v7.3');
-display('done')
+disp('done')
 
 end
 

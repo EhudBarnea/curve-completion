@@ -83,7 +83,7 @@ while(true)
         %         line(fragPts(:,1),fragPts(:,2));
         %         axis equal
         
-        display([num2str(relEndPointBin(1)) ' ' num2str(relEndPointBin(1)) ' = ' num2str(numSamples(flippedY, relEndPointBin(1)))]);
+        disp([num2str(relEndPointBin(1)) ' ' num2str(relEndPointBin(1)) ' = ' num2str(numSamples(flippedY, relEndPointBin(1)))]);
     end
 end
 

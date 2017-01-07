@@ -11,6 +11,11 @@ params.curvesFolder = [params.datasetFolder 'GT_mat_CFGD_format/'];
 params.imgsFolder = [params.datasetFolder 'img/'];
 params.outFolder = '../data/';
 
+% number of parpool workers
+param.numParWorkers = 1; % default
+% param.numParWorkers = 20; % sge44
+% param.numParWorkers = 32; % sge59
+
 % get all dataset image names and sizes
 files = dir([params.imgsFolder '*jpg']);
 params.numImgs = length(files);
@@ -47,13 +52,9 @@ params.orBinSize = 2*pi/params.numOrBins;
 
 % match distance and orientation. This configures which curve fragments to
 % use for a completion given start and end inducers in cannonical pose
-params.matchDist = 0.7;
-params.matchOr = 22.5*pi/180;
+params.matchDist = 2;
+params.matchOr = 10*pi/180;
 
-% number of parpool workers
-param.numParWorkers = 1; % default
-% param.numParWorkers = 20; % sge44
-% param.numParWorkers = 32; % sge59
 
 %% train / collect data
 
@@ -61,7 +62,7 @@ collectCurveFrags(params);
 
 %% complete a single curve
 
-if ~exist('frags')
+if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
  
@@ -75,7 +76,7 @@ or2 = 0;
 
 %% run completion demo
 
-if ~exist('frags')
+if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
  
@@ -84,7 +85,7 @@ demoCompletionSingle(frags, img, params);
 
 %% show completions of all curves
 
-if ~exist('frags')
+if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
  
@@ -92,7 +93,7 @@ completeAllCurves(frags, params)
 
 %% visualize number of samples
 
-if ~exist('frags')
+if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
 for i=1:8
@@ -110,15 +111,20 @@ end
 %% Analyse scale invariance
 
 
-if ~exist('frags')
+if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
 
-endPointDirection = [0, -1];
-% endPointDirection = [4, -1];
-endPointDirection=endPointDirection/norm(endPointDirection);
-
 endPointOr = 0;
+% endPointOr = deg2rad(135);
 
-analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
-
+% loop over different endPointDirections. The range variable is used since
+% parfor requires consecutive integers.
+parpool(param.numParWorkers);
+range = deg2rad(270:5:360);
+parfor i = 1:numel(range)
+    disp([num2str(i) '/' num2str(numel(range)) ' start']);
+    endPointDirection = range(i);
+    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
+    disp([num2str(i) '/' num2str(numel(range)) ' done']);
+end
