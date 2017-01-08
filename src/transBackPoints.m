@@ -5,7 +5,7 @@ function [transPts] = transBackPoints(pts, refP, refOr)
 
 
 % amount to rotate (can be negative), so that the reference
-% point that looks right will look to direction refOr
+% point that looks right will look to direction refOr. (this explanation needs to be made more general for the function interpCurve in completeCurve.m)
 rotation_angle = refOr;
 
 % create rotation matrix

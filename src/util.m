@@ -115,16 +115,19 @@ if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
 
-endPointOr = 0;
-% endPointOr = deg2rad(135);
 
-% loop over different endPointDirections. The range variable is used since
+% loop over different end point directions and end point orientations. The range variables are used since
 % parfor requires consecutive integers.
+rangeDir = deg2rad(270:5:360);
+rangeOr = deg2rad(0:45:315);
+% get all pairs of endPointDirection and endPointOr
+[p,q] = meshgrid(rangeDir, rangeOr);
+rangePairs = [p(:) q(:)];
 parpool(param.numParWorkers);
-range = deg2rad(270:5:360);
-parfor i = 1:numel(range)
-    disp([num2str(i) '/' num2str(numel(range)) ' start']);
-    endPointDirection = range(i);
+parfor i = 1:size(rangePairs,1)
+    disp([num2str(i) '/' num2str(size(rangePairs,1)) ' start']);
+    endPointDirection = rangePairs(i,1);
+    endPointOr = rangePairs(i,2);
     analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
-    disp([num2str(i) '/' num2str(numel(range)) ' done']);
+    disp([num2str(i) '/' num2str(size(rangePairs,1)) ' done']);
 end

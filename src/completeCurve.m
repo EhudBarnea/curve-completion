@@ -14,6 +14,8 @@ maxFragsToUse = inf;
 maxFragsToShow = 10;
 numCurveRepPts = 5;
 
+interpolateCurve = false;
+
 c = [];
 out = [];
 
@@ -93,15 +95,23 @@ out.fragCenters = fragCenters;
 out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
 
-% calculate mean curve
+% calculate mean curve points
 %         coeff = pca(allRepPts);
 meanPts = mean(allRepPts,1);
 meanPts = reshape(meanPts, numCurveRepPts, 2);
 
+% interpolate curve
+c = [0,0; meanPts; endPoint];
+if interpolateCurve
+    c = interpCurve(c, [0;endPointOr]);
+end
+
+
 if vis
     % draw mean curve
     scatter(meanPts(:,1),meanPts(:,2),7,'r','filled');
-    line(meanPts(:,1),meanPts(:,2),'Color','r');
+%     line(meanPts(:,1),meanPts(:,2),'Color','r');
+    plot(c(:,1), c(:,2), 'Color', 'r');
     
     hold on
     scatter(0,0,7,'r','filled')
@@ -114,14 +124,12 @@ end
 
 % mirror back curve
 if mirrored
-    meanPts(:,2) = -meanPts(:,2);
+    c(:,2) = -c(:,2);
 end
 
 % put curve in the coordinate system of p1 and p2
-[meanPts] = transBackPoints(meanPts, p1, or1);
-c = [p1; meanPts; p2];
+c = transBackPoints(c, p1, or1);
 
-% numFrags
 end
 
 
@@ -166,4 +174,30 @@ end
 function res = normRows(mat)
     % calculate the norm of each row in mat
     res = sqrt(sum(mat.^2,2));
+end
+
+function c = interpCurve(curvePts, startEndOrs)
+    % interpolate a smooth curve for the set of points curveRepPts with
+    % orientations for the first and last points startEndOrs. This
+    % uses a clamped spline, which is a spline for each conditions are
+    % given for the end points in the form of their derivatives.
+    
+    
+    % transform curve points into a function by placing the start and end
+    % points on the x axis
+    refP = [0, 0];
+    refOr = getOrTwoPts(curvePts(1,:), curvePts(end,:));
+    ors = [startEndOrs(1); zeros(size(curvePts,1)-2,1); startEndOrs(2)];
+    [transPts, transOrs] = transPoints(curvePts, ors, refP, refOr);
+    
+    % fit a clamped spline to the points
+    cs = spline(transPts(:,1)',transPts(:,2)'); % without start/end orientations
+%     der = 100;
+%     cs = spline(transPts(:,1)',[der, transPts(:,2)', -der]);
+    xx = linspace(transPts(1,1),transPts(end,1),100); % generate more points
+    yy = ppval(cs,xx);
+    c = [xx', yy'];
+    
+    % transform curve back
+    [c] = transBackPoints(c, curvePts(1,:), -pi/2);
 end
