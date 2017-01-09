@@ -1,12 +1,15 @@
-function [] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
+function [] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale)
 % compare the center point statistics of curves that belong to inducer
 % pairs that are the same up to scale
 
-% endPointDirection - angle between the x axis and the end point
-% endPointOr - orientation of the second inducer
+% endPointDirection - angle between the x axis and the end point.
+% endPointOr - orientation of the second inducer.
+% visEachScale - visualize the center point distribtion at each scale
+% (defualt=false).
 
-
-visEachScale = false;
+if nargin < 5
+    visEachScale = false;
+end
 
 % first inducer is always at point (0,0) looking right
 p1 = [0,0];
@@ -28,6 +31,7 @@ maxScale = 200;
 densityGridSize = 2^8;
 scaleDists = zeros(densityGridSize, densityGridSize, maxScale);
 usableScales = false(maxScale, 1);
+fragsPerScale = zeros(maxScale, 1);
 
 for s=1:maxScale % loop over scales
 %     s
@@ -39,6 +43,7 @@ for s=1:maxScale % loop over scales
     y = p2(2);
     
     [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, false);
+    fragsPerScale(s) = out.numFrags;
     if isUsable
         % rescale returned fragment centers to a cannonical size
         out.fragCenters = (out.fragCenters / s) * 50;
@@ -64,15 +69,6 @@ for s=1:maxScale % loop over scales
             title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs)]);
             saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_centerD2.png']);
             close all
-            
-            % show center of completed curve
-%             cCenter = c(ceil(size(c,1)/2),:);
-%             scatter(cCenter(1),cCenter(2),12,'r','filled')
-%             axis equal
-%             axis([-200 200 -200 200])
-%             title(['num points = ' num2str(size(out.fragCenters,1))]);
-%             saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_center.png']);
-%             close all
         end
         
         scaleDists(:,:,s) = density2;
@@ -91,6 +87,19 @@ distSumVar(~usableScales) = 0;
 plot(distSumVar)
 axis([0 200 0 2])
 saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '.png']);
+close all
+% visualize number of fragments at each scale
+plot(fragsPerScale)
+saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
+axis([0 200 0 500])
+saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFragsLim.png']);
+close all
+% visualize inducers
+s=100;
+p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
+or2 = endPointOr;
+visInducers([0, 0], 0, p2, or2);
+saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
 close all
 
 end

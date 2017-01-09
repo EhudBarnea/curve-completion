@@ -55,6 +55,8 @@ params.orBinSize = 2*pi/params.numOrBins;
 params.matchDist = 2;
 params.matchOr = 10*pi/180;
 
+% set jet colormap
+set(groot,'DefaultFigureColormap',jet)
 
 %% train / collect data
 
@@ -108,7 +110,20 @@ for i=1:8
     close all
 end
 
-%% Analyse scale invariance
+%% Analyse scale invariance - single configuration
+
+
+if ~exist('frags','var')
+    load([params.outFolder 'all_frags/frags']);
+end
+
+
+endPointDirection = deg2rad(340);
+endPointOr = deg2rad(135);
+analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, true);
+
+
+%% Analyse scale invariance - all configurations
 
 
 if ~exist('frags','var')
@@ -128,6 +143,7 @@ parfor i = 1:size(rangePairs,1)
     disp([num2str(i) '/' num2str(size(rangePairs,1)) ' start']);
     endPointDirection = rangePairs(i,1);
     endPointOr = rangePairs(i,2);
-    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params)
+    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params);
     disp([num2str(i) '/' num2str(size(rangePairs,1)) ' done']);
 end
+
