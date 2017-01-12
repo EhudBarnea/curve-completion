@@ -135,13 +135,19 @@ end
 
 function nearFrags = getNearFrags(endPoint, endPointOr, frags, params)
     % Get all curve fragments near an end point. More specifically, those
-    % that are params.matchDist away from endPoint and with orientation
-    % params.matchOr away from endPointOr.
+    % that are matchDist away from endPoint and with orientation
+    % params.matchOr away from endPointOr, where matchDist is calculate
+    % relative to the distance to the endPoint via the
+    % params.matchDistFactor parameter.
 
-    % get the box that bounds the circle of params.matchDist radius,
+    % calculate matcing distance (the meaning of "near")
+    inducerDist = norm([0,0] - endPoint);
+    matchDist = inducerDist / params.matchDistFactor;
+    
+    % get the box that bounds the circle of matchDist radius,
     % centered at endPoint
-    boxX = [floor(endPoint(1)-params.matchDist), ceil(endPoint(1)+params.matchDist)];
-    boxY = [floor(endPoint(2)-params.matchDist), ceil(endPoint(2)+params.matchDist)];
+    boxX = [floor(endPoint(1)-matchDist), ceil(endPoint(1)+matchDist)];
+    boxY = [floor(endPoint(2)-matchDist), ceil(endPoint(2)+matchDist)];
     
     % move to frags array coordinates
     boxX = (boxX - params.relMinX) / params.binSize + 1;
@@ -157,8 +163,8 @@ function nearFrags = getNearFrags(endPoint, endPointOr, frags, params)
     relevantFrags = cat(1,frags{boxX(1):boxX(2),boxY(1):boxY(2),:});
     
     % filter the relevant frags
-    nearFrags = normRows(relevantFrags(:,5)-endPoint(1)) < params.matchDist & ...
-        normRows(relevantFrags(:,6)-endPoint(2)) < params.matchDist & ...
+    nearFrags = normRows(relevantFrags(:,5)-endPoint(1)) < matchDist & ...
+        normRows(relevantFrags(:,6)-endPoint(2)) < matchDist & ...
         angularDist(relevantFrags(:,7), endPointOr) < params.matchOr;
     nearFrags = relevantFrags(nearFrags,:);
 end

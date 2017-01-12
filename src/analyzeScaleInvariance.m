@@ -43,8 +43,10 @@ for s=1:maxScale % loop over scales
     y = p2(2);
     
     [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, false);
-    fragsPerScale(s) = out.numFrags;
     if isUsable
+        % keep number of fragments
+        fragsPerScale(s) = out.numFrags;
+        
         % rescale returned fragment centers to a cannonical size
         out.fragCenters = (out.fragCenters / s) * 50;
         
@@ -86,20 +88,20 @@ distSumVar(~usableScales) = 0;
 % visualize distribution variance across scales
 plot(distSumVar)
 axis([0 200 0 2])
-saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '.png']);
+saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '.png']);
 close all
 % visualize number of fragments at each scale
 plot(fragsPerScale)
-saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
+saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
 axis([0 200 0 500])
-saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFragsLim.png']);
+saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFragsLim.png']);
 close all
 % visualize inducers
 s=100;
 p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
 or2 = endPointOr;
 visInducers([0, 0], 0, p2, or2);
-saveas(gcf,[allScalesOutFolder 'scaleError_' num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
+saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
 close all
 
 end

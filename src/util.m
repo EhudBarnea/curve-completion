@@ -50,9 +50,15 @@ params.numOrBins = 8;
 params.orBinSize = 2*pi/params.numOrBins;
 % ----- 
 
-% match distance and orientation. This configures which curve fragments to
-% use for a completion given start and end inducers in cannonical pose
-params.matchDist = 2;
+% match distance factor and orientation. This configures which curve fragments to
+% use (the close enough fragments) for a completion given start and end
+% inducers in cannonical pose. The distance factor is in number of pixels,
+% but relative to the distance between the start and end inducers of a
+% curve fragment.
+% For example, a matchDistFactor of 10 means that for curves for which the
+% (Euclidean) distance between the inducers is 10 pixels, other curve
+% fragments will be considered if their end point is 1 pixel away.
+params.matchDistFactor = 10;
 params.matchOr = 10*pi/180;
 
 % set jet colormap
@@ -118,8 +124,8 @@ if ~exist('frags','var')
 end
 
 
-endPointDirection = deg2rad(340);
-endPointOr = deg2rad(135);
+endPointDirection = deg2rad(325);
+endPointOr = deg2rad(180);
 analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, true);
 
 
