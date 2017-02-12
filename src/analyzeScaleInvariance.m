@@ -30,6 +30,7 @@ maxScale = 200;
 % keep center point distributions of all scales
 densityGridSize = 2^8;
 scaleDists = zeros(densityGridSize, densityGridSize, maxScale);
+maxPts = zeros(maxScale, 2);
 usableScales = false(maxScale, 1);
 fragsPerScale = zeros(maxScale, 1);
 
@@ -50,30 +51,34 @@ for s=1:maxScale % loop over scales
         % rescale returned fragment centers to a cannonical size
         out.fragCenters = (out.fragCenters / s) * 50;
         
+        % centers point distribution
+        [~,density,X2,Y2]=kde2d_updated(out.fragCenters, densityGridSize, [params.relMinX, params.relMinY], [params.relMaxX, params.relMaxY], 0.00002);
         
-        % centers point distribution big
-        [~,density1,X1,Y1]=kde2d_updated(out.fragCenters, densityGridSize, [params.relMinX, params.relMinY], [params.relMaxX, params.relMaxY], 0.0002);
-        % centers point distribution small
-        [~,density2,X2,Y2]=kde2d_updated(out.fragCenters, densityGridSize, [params.relMinX, params.relMinY], [params.relMaxX, params.relMaxY], 0.00002);
+        % get center point as maximum point
+        [~,maxInd] = max(density(:));
+        [maxIndRow, maxIndCol] = ind2sub(size(density), maxInd);
+        maxPoint = [maxIndCol, maxIndRow];
+        [s maxPoint]
+        
         if visEachScale
-            % show centers point distribution big
-            surf(X1,Y1,density1,'EdgeColor','None')
+            % show centers point distribution
+            surf(X2,Y2,density,'EdgeColor','None')
             view(2)
             axis equal
             title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs)]);
-            saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_centerD1.png']);
+            saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_dist.png']);
             close all
             
-            % show centers point distribution small
-            surf(X2,Y2,density2,'EdgeColor','None')
-            view(2)
+            % show maximum point
+            scatter(maxPoint(1), maxPoint(2),12,'r','filled')
             axis equal
-            title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs)]);
-            saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_centerD2.png']);
+            axis([0 200 0 200])
+            saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_maxP.png']);
             close all
         end
         
-        scaleDists(:,:,s) = density2;
+        scaleDists(:,:,s) = density;
+        maxPts(s,:) = maxPoint;
         usableScales(s) = true;
     end
 end
@@ -85,17 +90,30 @@ distDiff = abs(scaleDists - repmat(meanDist,1,1,size(scaleDists,3)));
 distSumVar = squeeze(sum(sum(distDiff,2),1)); 
 distSumVar(~usableScales) = 0;
 
+% calculate maximal point difference (from mean) across scales
+meanMaxP = mean(maxPts(usableScales,:),1);
+diffMaxP = normRows(maxPts - repmat(meanMaxP, size(maxPts,1), 1));
+diffMaxP(~usableScales) = 0;
+
 % visualize distribution variance across scales
 plot(distSumVar)
 axis([0 200 0 2])
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '.png']);
 close all
+
+% visualize max point difference across scales
+plot(diffMaxP)
+axis([0 200 0 20])
+saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_maxP.png']);
+close all
+
 % visualize number of fragments at each scale
 plot(fragsPerScale)
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
 axis([0 200 0 500])
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFragsLim.png']);
 close all
+
 % visualize inducers
 s=100;
 p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
@@ -114,3 +132,8 @@ if ~exist(dirName,'dir')
 end
 end
 
+
+function res = normRows(mat)
+    % calculate the norm of each row in mat
+    res = sqrt(sum(mat.^2,2));
+end

@@ -2,7 +2,10 @@
 %% params
 
 
-addpath('export_fig/');
+if ~exist('completeCurve.m','file')
+    display('Error: file completeCurve.m cannot be found, cd to the src folder');
+end
+
 addpath('kde2d/');
 
 % set folder paths
@@ -60,9 +63,10 @@ params.orBinSize = 2*pi/params.numOrBins;
 % fragments will be considered if their end point is 1 pixel away.
 params.matchDistFactor = 10;
 params.matchOr = 10*pi/180;
+% params.matchOr = 2*pi/180;
 
 % set jet colormap
-set(groot,'DefaultFigureColormap',jet)
+% set(groot,'DefaultFigureColormap',jet)
 
 %% train / collect data
 
@@ -75,10 +79,17 @@ if ~exist('frags','var')
 end
  
 vis = true;
-p1 = [30,30];
-or1 = 0;
-p2 = [30,90];
-or2 = 0;
+%--
+% p1 = [30,30];
+% or1 = 0;
+% p2 = [30,90];
+% or2 = 0;
+%--
+p1 = [-30,0];
+or1 = deg2rad(30);
+p2 = [30,0];
+or2 = pi-or1;
+%--
 [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
 
 
@@ -124,10 +135,10 @@ if ~exist('frags','var')
 end
 
 
-endPointDirection = deg2rad(325);
-endPointOr = deg2rad(180);
+endPointDirection = deg2rad(340);
+endPointOr = deg2rad(135);
 analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, true);
-
+display('done');
 
 %% Analyse scale invariance - all configurations
 

@@ -9,9 +9,11 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 % out.numDiffImgs - number of images from which the used fragments were taken from
 % out.fragCenters - center points of all fragments observed between the two inducers
 
-% maxFragsToUse = 30;
+% maxFragsToUse = 100;
 maxFragsToUse = inf;
-maxFragsToShow = 10;
+% maxFragsToShow = 10;
+maxFragsToShow = 5;
+% numCurveRepPts = 3;
 numCurveRepPts = 5;
 
 interpolateCurve = false;
@@ -36,6 +38,7 @@ end
 
 % get relevant fragments
 endPointFrags = getNearFrags(endPoint, endPointOr, frags, params);
+% endPointFrags = getNearFragsRad(endPoint, endPointOr, frags, params);
 
 numFrags = size(endPointFrags,1);
 numFragsToUse = min(numFrags, maxFragsToUse);
@@ -83,6 +86,12 @@ for i=1:numFragsToUse
     if vis && i<=maxFragsToShow
         line(fragPts(:,1),fragPts(:,2));
         hold on
+        % ---- show each fragment in its own image
+%         axis equal
+%         axis([-200 200 -200 200])
+%         pause(0.5)
+%         close all
+        % ----
     end
 end
 
@@ -95,13 +104,12 @@ out.fragCenters = fragCenters;
 out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
 
-% calculate mean curve points
-%         coeff = pca(allRepPts);
-meanPts = mean(allRepPts,1);
-meanPts = reshape(meanPts, numCurveRepPts, 2);
+% calculate completion curve
+% c = genCurveMean(allRepPts, numCurveRepPts, params);
+c = genCurveKDE(allRepPts, numCurveRepPts, params);
 
 % interpolate curve
-c = [0,0; meanPts; endPoint];
+c = [0,0; c; endPoint];
 if interpolateCurve
     c = interpCurve(c, [0;endPointOr]);
 end
@@ -109,7 +117,7 @@ end
 
 if vis
     % draw mean curve
-    scatter(meanPts(:,1),meanPts(:,2),7,'r','filled');
+    scatter(c(:,1),c(:,2),7,'r','filled');
 %     line(meanPts(:,1),meanPts(:,2),'Color','r');
     plot(c(:,1), c(:,2), 'Color', 'r');
     
@@ -132,8 +140,54 @@ c = transBackPoints(c, p1, or1);
 
 end
 
+function curvePts = genCurveMean(allRepPts, numCurveRepPts, params)
+% Generate curve using a set of curves as their mean curve points, i.e.,
+% each point in the curve is a mean of all the other corresponding points.
+
+% allRepPts - the set of representative points of the curves to use. This
+% is an array of NxM where N is the number of curves and M is
+% numCurveRepPts*2 (for x and y).
+% numCurveRepPts - the number of representative points of each curve
+
+meanPts = mean(allRepPts,1);
+meanPts = reshape(meanPts, numCurveRepPts, 2);
+
+curvePts = meanPts;
+end
+
+
+function curvePts = genCurveKDE(allRepPts, numCurveRepPts, params)
+% Generate curve using a set of curves as the maximum of the curve
+% distribution calculated using KDE.
+
+% allRepPts - the set of representative points of the curves to use. This
+% is an array of NxM where N is the number of curves and M is
+% numCurveRepPts*2 (for x and y).
+% numCurveRepPts - the number of representative points of each curve
+
+
+densityGridSize = 2^8;
+
+
+i=3;
+[~,density,X2,Y2]=kde2d_updated(allRepPts(:,i*2:i*2+1), densityGridSize, [params.relMinX, params.relMinY], [params.relMaxX, params.relMaxY], 0.00002);
+
+
+curvePts = [];
+end
 
 function nearFrags = getNearFrags(endPoint, endPointOr, frags, params)
+    % Get all curve fragments near an end point. More specifically, those
+    % for which the endPoint falls in the same bin
+
+    
+    endPointBin = floor((endPoint - [params.relMinX, params.relMinY])/params.binSize) + 1;
+    endPointBin(endPointBin>params.numBins) = params.numBins(1);
+    endPointOrBin = getOrBin(endPointOr, params.orBinSize, params.numOrBins);
+    nearFrags = frags{endPointBin(1), endPointBin(2), endPointOrBin};
+end
+
+function nearFrags = getNearFragsRad(endPoint, endPointOr, frags, params)
     % Get all curve fragments near an end point. More specifically, those
     % that are matchDist away from endPoint and with orientation
     % params.matchOr away from endPointOr, where matchDist is calculate
@@ -159,14 +213,27 @@ function nearFrags = getNearFrags(endPoint, endPointOr, frags, params)
     boxX(boxX>params.numBins(1)) = params.numBins(1);
     boxY(boxY>params.numBins(2)) = params.numBins(2);
     
-    % get relevant frags
+    % get relevant (somewhat close) frags
     relevantFrags = cat(1,frags{boxX(1):boxX(2),boxY(1):boxY(2),:});
     
-    % filter the relevant frags
+    % relevantFrags columns:
+    % 1. Image number
+    % 2. Curve number
+    % 3. Start point number
+    % 4. End point number
+    % 5. End point X relative to start
+    % 6. End point Y relative to start
+    % 7. End point orientation relative to start
+    
+    % filter (keep) the relevant (close enough) frags
     nearFrags = normRows(relevantFrags(:,5)-endPoint(1)) < matchDist & ...
         normRows(relevantFrags(:,6)-endPoint(2)) < matchDist & ...
         angularDist(relevantFrags(:,7), endPointOr) < params.matchOr;
     nearFrags = relevantFrags(nearFrags,:);
+    
+    % remove fragments from the same curve
+    [~, idx, ~] = unique(nearFrags(:,1:2),'rows');
+    nearFrags = nearFrags(idx,:);
 end
 
 
@@ -188,6 +255,9 @@ function c = interpCurve(curvePts, startEndOrs)
     % uses a clamped spline, which is a spline for each conditions are
     % given for the end points in the form of their derivatives.
     
+    % A clamped spline is problematic for two reasons:
+    % 1. It fits only functions.
+    % 2. For some orientations the derivative is infinity.
     
     % transform curve points into a function by placing the start and end
     % points on the x axis
@@ -199,7 +269,7 @@ function c = interpCurve(curvePts, startEndOrs)
     % fit a clamped spline to the points
     cs = spline(transPts(:,1)',transPts(:,2)'); % without start/end orientations
 %     der = 100;
-%     cs = spline(transPts(:,1)',[der, transPts(:,2)', -der]);
+%     cs = spline(transPts(:,1)',[der, transPts(:,2)', -der]); % with (clamped)
     xx = linspace(transPts(1,1),transPts(end,1),100); % generate more points
     yy = ppval(cs,xx);
     c = [xx', yy'];
