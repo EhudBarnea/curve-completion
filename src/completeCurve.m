@@ -13,8 +13,8 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 maxFragsToUse = inf;
 % maxFragsToShow = 10;
 maxFragsToShow = 5;
-% numCurveRepPts = 3;
-numCurveRepPts = 5;
+numCurveRepPts = 3;
+% numCurveRepPts = 5;
 
 interpolateCurve = false;
 
@@ -37,8 +37,8 @@ if endPoint(2) > 0
 end
 
 % get relevant fragments
-endPointFrags = getNearFrags(endPoint, endPointOr, frags, params);
-% endPointFrags = getNearFragsRad(endPoint, endPointOr, frags, params);
+% endPointFrags = getNearFrags(endPoint, endPointOr, frags, params);
+endPointFrags = getNearFragsRad(endPoint, endPointOr, frags, params);
 
 numFrags = size(endPointFrags,1);
 numFragsToUse = min(numFrags, maxFragsToUse);
@@ -73,13 +73,17 @@ for i=1:numFragsToUse
     % transform to canonincal pose
     [fragPts] = getCanonCurve(c, fragP1, fragP2);
     
+    % stretch such that the end point matches endPoint (for getNearFragsRad)
+    stretchFactor = endPoint./fragPts(end,:);
+    fragPts = fragPts.*repmat(stretchFactor,size(fragPts,1),1);
+    
     fragImgs(imgNum) = true;
     
     % get representative points
     repPts = getCurveEquiPoints(fragPts, numCurveRepPts);
     allRepPts(i,:) = reshape(repPts,1,numCurveRepPts*2);
     
-    % get frag center (for further statistics)
+    % get frag center
     fragCenters(i,:) = getCurveEquiPoints(fragPts, 1);
     
     % display
@@ -105,8 +109,8 @@ out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
 
 % calculate completion curve
-% c = genCurveMean(allRepPts, numCurveRepPts, params);
-c = genCurveKDE(allRepPts, numCurveRepPts, params);
+c = genCurveMean(allRepPts, numCurveRepPts, params);
+% c = genCurveKDE(allRepPts, numCurveRepPts, params);
 
 % interpolate curve
 c = [0,0; c; endPoint];
@@ -226,10 +230,9 @@ function nearFrags = getNearFragsRad(endPoint, endPointOr, frags, params)
     % 7. End point orientation relative to start
     
     % filter (keep) the relevant (close enough) frags
-    nearFrags = normRows(relevantFrags(:,5)-endPoint(1)) < matchDist & ...
-        normRows(relevantFrags(:,6)-endPoint(2)) < matchDist & ...
+    nearFragsID = normRows(relevantFrags(:,5:6)-repmat(endPoint,size(relevantFrags,1),1)) < matchDist & ...
         angularDist(relevantFrags(:,7), endPointOr) < params.matchOr;
-    nearFrags = relevantFrags(nearFrags,:);
+    nearFrags = relevantFrags(nearFragsID,:);
     
     % remove fragments from the same curve
     [~, idx, ~] = unique(nearFrags(:,1:2),'rows');
