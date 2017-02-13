@@ -137,7 +137,7 @@ end
 
 endPointDirection = deg2rad(340);
 endPointOr = deg2rad(135);
-analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, true);
+analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, false);
 display('done');
 
 %% Analyse scale invariance - all configurations
