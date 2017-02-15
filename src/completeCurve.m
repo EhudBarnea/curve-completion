@@ -9,8 +9,8 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 % out.numDiffImgs - number of images from which the used fragments were taken from
 % out.fragCenters - center points of all fragments observed between the two inducers
 
-% maxFragsToUse = 100;
-maxFragsToUse = inf;
+maxFragsToUse = 300;
+% maxFragsToUse = inf;
 % maxFragsToShow = 10;
 maxFragsToShow = 5;
 numCurveRepPts = 3;
@@ -73,9 +73,12 @@ for i=1:numFragsToUse
     % transform to canonincal pose
     [fragPts] = getCanonCurve(c, fragP1, fragP2);
     
-    % stretch such that the end point matches endPoint (for getNearFragsRad)
-    stretchFactor = endPoint./fragPts(end,:);
-    fragPts = fragPts.*repmat(stretchFactor,size(fragPts,1),1);
+    % stretch such that the end point matches endPoint. This has a problem
+    % when endPoint(1)==0 or endPoint(2)==0
+    if params.relMatchDist
+        stretchFactor = fragPts(end,:)./endPoint;
+        fragPts = fragPts./repmat(stretchFactor,size(fragPts,1),1);
+    end
     
     fragImgs(imgNum) = true;
     
@@ -199,8 +202,12 @@ function nearFrags = getNearFragsRad(endPoint, endPointOr, frags, params)
     % params.matchDistFactor parameter.
 
     % calculate matcing distance (the meaning of "near")
-    inducerDist = norm([0,0] - endPoint);
-    matchDist = inducerDist / params.matchDistFactor;
+    if params.relMatchDist
+        inducerDist = norm([0,0] - endPoint);
+        matchDist = inducerDist / params.matchDistFactor;
+    else
+        matchDist = params.matchDistFactor;
+    end
     
     % get the box that bounds the circle of matchDist radius,
     % centered at endPoint

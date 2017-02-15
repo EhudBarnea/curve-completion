@@ -57,11 +57,18 @@ params.orBinSize = 2*pi/params.numOrBins;
 % use (the close enough fragments) for a completion given start and end
 % inducers in cannonical pose. The distance factor is in number of pixels,
 % but relative to the distance between the start and end inducers of a
-% curve fragment.
+% curve fragment (if relMatchDist=true).
 % For example, a matchDistFactor of 10 means that for curves for which the
 % (Euclidean) distance between the inducers is 10 pixels, other curve
 % fragments will be considered if their end point is 1 pixel away.
-params.matchDistFactor = 10;
+% set to a negative value to disable (using only curves that end in the
+% exact same pixel
+params.relMatchDist = false;
+if params.relMatchDist
+    params.matchDistFactor = 10;
+else
+    params.matchDistFactor = 1;
+end
 params.matchOr = 10*pi/180;
 % params.matchOr = 2*pi/180;
 
@@ -134,10 +141,11 @@ if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
 
+visEachScale = true;
 
 endPointDirection = deg2rad(340);
 endPointOr = deg2rad(135);
-analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, false);
+analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
 display('done');
 
 %% Analyse scale invariance - all configurations
@@ -147,6 +155,7 @@ if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
 
+visEachScale = true;
 
 % loop over different end point directions and end point orientations. The range variables are used since
 % parfor requires consecutive integers.
@@ -160,7 +169,7 @@ parfor i = 1:size(rangePairs,1)
     disp([num2str(i) '/' num2str(size(rangePairs,1)) ' start']);
     endPointDirection = rangePairs(i,1);
     endPointOr = rangePairs(i,2);
-    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params);
+    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
     disp([num2str(i) '/' num2str(size(rangePairs,1)) ' done']);
 end
 

@@ -27,6 +27,10 @@ end
 % define maximal scale to examine
 maxScale = 200;
 
+cannonScale = 50;
+
+removeOutliers = false;
+
 % keep information across all scales
 muPts = zeros(maxScale, 2);
 scaleSTD = zeros(maxScale, 1);
@@ -34,7 +38,7 @@ usableScales = false(maxScale, 1);
 fragsPerScale = zeros(maxScale, 1);
 
 for s=1:maxScale % loop over scales
-    s
+%     s
     
     % second inducer
     p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
@@ -48,31 +52,42 @@ for s=1:maxScale % loop over scales
         fragsPerScale(s) = out.numFrags;
         
         % rescale points to a cannonical size
-        out.fragCenters = (out.fragCenters / s) * 50;
-        p2Cannon = ([x,y] / s) * 50;
+        out.fragCenters = (out.fragCenters / s) * cannonScale;
+        p2Cannon = ([x,y] / s) * cannonScale;
+        
+        % remove outlier centers
+        if removeOutliers
+            outlierPercent = 0.10;
+            mDist = mahal(out.fragCenters,out.fragCenters);
+            [~,diffIdx]=sort(-mDist);
+            outliersIdx = diffIdx(1:floor(length(diffIdx)*outlierPercent));
+            outliers = out.fragCenters(outliersIdx,:);
+            out.fragCenters(outliersIdx,:) = [];
+        end
         
         % fit gaussian (get std along principal directions)
-        [centersDirs,~,centersStd,~,~,centersMu] = pca(out.fragCenters); 
+        meanCenter = mean(out.fragCenters,1);
+        centersSTD = mean(normRows(out.fragCenters-repmat(meanCenter,size(out.fragCenters,1),1)));
         
         if visEachScale
             % visualize center points, inducers, and STD circles
             plot(out.fragCenters(:,1),out.fragCenters(:,2),'b.');
             hold on;
-            scatter(centersMu(1),centersMu(2),30,'r','filled');
+            plot(outliers(:,1),outliers(:,2),'r.');
             hold on;
-            viscircles(centersMu,centersStd(1), 'LineWidth',1);
+            scatter(meanCenter(1),meanCenter(2),30,'r','filled');
             hold on;
-            viscircles(centersMu,centersStd(2), 'LineWidth',1);
+            viscircles(meanCenter,centersSTD(1), 'LineWidth',1);
             hold on;
             visInducers([0, 0], 0, p2Cannon, or2);
-            axis([-20,80,-50,50]);
-            title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs) '   STD1=' num2str(centersStd(1))]);
-            saveas(gcf,[scaleOutFolder 'c_' num2str(s) '_pts.png']);
+            axis([-20,100,-70,50]);
+            title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs) '   STD1=' num2str(centersSTD(1))]);
+            saveas(gcf,[scaleOutFolder 'c_' sprintf('%03d',s) '_pts.png']);
             close all;
         end
         
-        muPts(s,:) = centersMu;
-        scaleSTD(s) = centersStd(1);
+        muPts(s,:) = meanCenter;
+        scaleSTD(s) = centersSTD(1);
         usableScales(s) = true;
     end
 end
@@ -101,10 +116,12 @@ saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(r
 close all
 
 % visualize inducers
-s=100;
-p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
+scatter(meanMu(1),meanMu(2),30,'r','filled');
+hold on
+p2 = [cos(endPointDirection), sin(endPointDirection)] * cannonScale;
 or2 = endPointOr;
 visInducers([0, 0], 0, p2, or2);
+axis([-2 2 -2 2]*cannonScale)
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
 close all
 
