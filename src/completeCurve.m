@@ -1,6 +1,8 @@
 function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis)
 % complete curve between points p1,p2 with orientations or1,or2
 
+% input:
+% frags - frags dataset. use fragsSI if params.matchSI=true
 % output:
 % c - the completed curve (points)
 % isUsable - whether the data can be trusted but a good completion
@@ -37,7 +39,17 @@ if endPoint(2) > 0
 end
 
 % get relevant fragments
-endPointFrags = getNearFrags(endPoint, endPointOr, 'rad', frags, params);
+if ~params.matchSI
+    endPointFrags = getNearFrags(endPoint, endPointOr, 'rad', frags, params);
+else
+    endPointFrags = getNearFrags(endPoint, endPointOr, 'si', frags, params);
+end
+
+% remove frags from small scales
+if params.matchSI
+    fragScales = normRows(endPointFrags(:,5:6));
+    endPointFrags = endPointFrags(fragScales > params.siMinScale,:);
+end
 
 numFrags = size(endPointFrags,1);
 numFragsToUse = min(numFrags, maxFragsToUse);
@@ -182,21 +194,6 @@ i=3;
 curvePts = [];
 end
 
-
-
-
-function angDist = angularDist(or1, or2)
-    % calculate the angular distance between each value in the vector or1,
-    % and the scalar or2
-    angDist = mod(or1 - or2,2*pi);
-    angDist(angDist > pi) = 2*pi - angDist(angDist > pi);
-end
-
-function res = normRows(mat)
-    % calculate the norm of each row in mat
-    res = sqrt(sum(mat.^2,2));
-end
-
 function c = interpCurve(curvePts, startEndOrs)
     % interpolate a smooth curve for the set of points curveRepPts with
     % orientations for the first and last points startEndOrs. This
@@ -224,4 +221,9 @@ function c = interpCurve(curvePts, startEndOrs)
     
     % transform curve back
     [c] = transBackPoints(c, curvePts(1,:), -pi/2);
+end
+
+function res = normRows(mat)
+    % calculate the norm of each row in mat
+    res = sqrt(sum(mat.^2,2));
 end

@@ -59,7 +59,7 @@ params.siAngBinSize = pi/params.siNumAngBins;
 params.siNumOrBins = 8;
 params.siOrBinSize = 2*pi/params.siNumOrBins;
 % ----- 
-
+params.siMinScale = 20; % do not use curve of scale smaller than this
 
 % match distance factor and orientation. This configures which curve fragments to
 % use (the close enough fragments) for a completion given start and end
@@ -71,7 +71,7 @@ params.siOrBinSize = 2*pi/params.siNumOrBins;
 % fragments will be considered if their end point is 1 pixel away.
 % set to a negative value to disable (using only curves that end in the
 % exact same pixel
-params.relMatchDist = false;
+params.relMatchDist = true;
 if params.relMatchDist
     params.matchDistFactor = 10;
 else
@@ -79,6 +79,7 @@ else
 end
 params.matchOr = 10*pi/180;
 % params.matchOr = 2*pi/180;
+params.matchSI = true; % match in a scale invariant way
 
 % set jet colormap
 % set(groot,'DefaultFigureColormap',jet)
@@ -91,8 +92,11 @@ collectScaleInvCurveFrags(frags, params);
 
 %% complete a single curve
 
-if ~exist('frags','var')
+if ~exist('frags','var') && ~params.matchSI
     load([params.outFolder 'all_frags/frags']);
+end
+if ~exist('fragsSI','var') && params.matchSI
+    load([params.outFolder 'all_frags/fragsSI']);
 end
  
 vis = true;
@@ -107,13 +111,20 @@ or1 = deg2rad(30);
 p2 = [30,0];
 or2 = pi-or1;
 %--
-[c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
+if ~params.matchSI
+    [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
+else
+    [c, isUsable, out] = completeCurve(p1, or1, p2, or2, fragsSI, params, vis);
+end
 
 
 %% run completion demo
 
-if ~exist('frags','var')
+if ~exist('frags','var') && ~params.matchSI
     load([params.outFolder 'all_frags/frags']);
+end
+if ~exist('fragsSI','var') && params.matchSI
+    load([params.outFolder 'all_frags/fragsSI']);
 end
  
 %img = imread('a.png');
@@ -121,14 +132,25 @@ demoCompletionSingle(frags, img, params);
 
 %% show completions of all curves
 
-if ~exist('frags','var')
+if ~exist('frags','var') && ~params.matchSI
     load([params.outFolder 'all_frags/frags']);
 end
+if ~exist('fragsSI','var') && params.matchSI
+    load([params.outFolder 'all_frags/fragsSI']);
+end
  
-completeAllCurves(frags, params)
 
-%% visualize number of samples
+if ~params.matchSI
+    completeAllCurves(frags, params);
+else
+    completeAllCurves(fragsSI, params);
+end
 
+%% visualize number of samples (non scale invariant)
+
+if params.matchSI
+    disp('Error: incorrect configuration');
+end
 if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
@@ -146,7 +168,9 @@ end
 
 %% Analyse scale invariance - single configuration
 
-
+if params.matchSI
+    disp('Error: incorrect configuration');
+end
 if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
@@ -160,7 +184,9 @@ display('done');
 
 %% Analyse scale invariance - all configurations
 
-
+if params.matchSI
+    disp('Error: incorrect configuration');
+end
 if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags']);
 end
