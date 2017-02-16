@@ -73,8 +73,10 @@ for s=1:maxScale % loop over scales
             % visualize center points, inducers, and STD circles
             plot(out.fragCenters(:,1),out.fragCenters(:,2),'b.');
             hold on;
-            plot(outliers(:,1),outliers(:,2),'r.');
-            hold on;
+            if removeOutliers
+                plot(outliers(:,1),outliers(:,2),'r.');
+                hold on;
+            end
             scatter(meanCenter(1),meanCenter(2),30,'r','filled');
             hold on;
             viscircles(meanCenter,centersSTD(1), 'LineWidth',1);

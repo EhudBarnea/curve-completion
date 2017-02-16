@@ -53,6 +53,14 @@ params.numOrBins = 8;
 params.orBinSize = 2*pi/params.numOrBins;
 % ----- 
 
+% ----- params for the "fragsSI" dataset
+params.siNumAngBins = 30; % Number of angular bins for curve end points
+params.siAngBinSize = pi/params.siNumAngBins;
+params.siNumOrBins = 8;
+params.siOrBinSize = 2*pi/params.siNumOrBins;
+% ----- 
+
+
 % match distance factor and orientation. This configures which curve fragments to
 % use (the close enough fragments) for a completion given start and end
 % inducers in cannonical pose. The distance factor is in number of pixels,
@@ -78,6 +86,8 @@ params.matchOr = 10*pi/180;
 %% train / collect data
 
 collectCurveFrags(params);
+load([params.outFolder 'all_frags/frags']);
+collectScaleInvCurveFrags(frags, params);
 
 %% complete a single curve
 
