@@ -52,8 +52,8 @@ for s=1:maxScale % loop over scales
         fragsPerScale(s) = out.numFrags;
         
         % rescale points to a cannonical size
-        out.fragCenters = (out.fragCenters / s) * cannonScale;
         p2Cannon = ([x,y] / s) * cannonScale;
+        out.fragCenters = stretchCurve(out.fragCenters, p2Cannon);
         
         % remove outlier centers
         if removeOutliers
