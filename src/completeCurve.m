@@ -84,13 +84,9 @@ for i=1:numFragsToUse
     % transform to canonincal pose
     [fragPts] = getCanonCurve(c, fragP1, fragP2);
     
-    % stretch such that the end point matches endPoint. This has a problem
-    % when endPoint(1)==0 or endPoint(2)==0
+    % stretch such that the end point matches endPoint
     if params.relMatchDist || params.matchSI
         fragPts = stretchCurve(fragPts, endPoint);
-        %         stretchFactor = fragPts(end,:)./endPoint;
-        %         stretchFactor
-        %         fragPts = fragPts./repmat(stretchFactor,size(fragPts,1),1);
     end
     
     fragImgs(imgNum) = true;

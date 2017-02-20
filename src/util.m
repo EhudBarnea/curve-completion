@@ -164,7 +164,7 @@ for i=1:8
     tmp = flipud(tmp);
     
     imagesc(tmp>20);
-    export_fig([params.outFolder '/tmp/numSamples' num2str(i) '.png']);
+    saveas(gcf,[params.outFolder '/tmp/numSamples' num2str(i) '.png']);
     close all
 end
 

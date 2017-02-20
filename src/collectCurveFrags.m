@@ -102,7 +102,7 @@ parfor i = 1:numImgs
                     axis equal
                     axis([0 100 -50 50])
 %                     axis([-200 200 -200 200])
-%                     export_fig([outFolder 'tmp/' num2str([i,j,p1,p2])])
+%                     saveas(gcf,[outFolder 'tmp/' num2str([i,j,p1,p2])]);
 %                     close all
                 end
             end
