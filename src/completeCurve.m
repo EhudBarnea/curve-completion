@@ -15,8 +15,8 @@ maxFragsToUse = 300;
 % maxFragsToUse = inf;
 % maxFragsToShow = 10;
 maxFragsToShow = 5;
-numCurveRepPts = 3;
-% numCurveRepPts = 5;
+% numCurveRepPts = 3;
+numCurveRepPts = 16;
 
 interpolateCurve = false;
 
@@ -86,9 +86,11 @@ for i=1:numFragsToUse
     
     % stretch such that the end point matches endPoint. This has a problem
     % when endPoint(1)==0 or endPoint(2)==0
-    if params.relMatchDist
-        stretchFactor = fragPts(end,:)./endPoint;
-        fragPts = fragPts./repmat(stretchFactor,size(fragPts,1),1);
+    if params.relMatchDist || params.matchSI
+        fragPts = stretchCurve(fragPts, endPoint);
+        %         stretchFactor = fragPts(end,:)./endPoint;
+        %         stretchFactor
+        %         fragPts = fragPts./repmat(stretchFactor,size(fragPts,1),1);
     end
     
     fragImgs(imgNum) = true;
@@ -102,13 +104,13 @@ for i=1:numFragsToUse
     
     % display
     if vis && i<=maxFragsToShow
-        line(fragPts(:,1),fragPts(:,2));
+        line(fragPts(:,1),fragPts(:,2),'Color','k');
         hold on
         % ---- show each fragment in its own image
-%         axis equal
-%         axis([-200 200 -200 200])
-%         pause(0.5)
-%         close all
+        %         axis equal
+        %         axis([-200 200 -200 200])
+        %         pause(0.5)
+        %         close all
         % ----
     end
 end
@@ -136,7 +138,7 @@ end
 if vis
     % draw mean curve
     scatter(c(:,1),c(:,2),7,'r','filled');
-%     line(meanPts(:,1),meanPts(:,2),'Color','r');
+    %     line(meanPts(:,1),meanPts(:,2),'Color','r');
     plot(c(:,1), c(:,2), 'Color', 'r');
     
     hold on
@@ -195,35 +197,55 @@ curvePts = [];
 end
 
 function c = interpCurve(curvePts, startEndOrs)
-    % interpolate a smooth curve for the set of points curveRepPts with
-    % orientations for the first and last points startEndOrs. This
-    % uses a clamped spline, which is a spline for each conditions are
-    % given for the end points in the form of their derivatives.
-    
-    % A clamped spline is problematic for two reasons:
-    % 1. It fits only functions.
-    % 2. For some orientations the derivative is infinity.
-    
-    % transform curve points into a function by placing the start and end
-    % points on the x axis
-    refP = [0, 0];
-    refOr = getOrTwoPts(curvePts(1,:), curvePts(end,:));
-    ors = [startEndOrs(1); zeros(size(curvePts,1)-2,1); startEndOrs(2)];
-    [transPts, transOrs] = transPoints(curvePts, ors, refP, refOr);
-    
-    % fit a clamped spline to the points
-    cs = spline(transPts(:,1)',transPts(:,2)'); % without start/end orientations
+% interpolate a smooth curve for the set of points curveRepPts with
+% orientations for the first and last points startEndOrs. This
+% uses a clamped spline, which is a spline for each conditions are
+% given for the end points in the form of their derivatives.
+
+% A clamped spline is problematic for two reasons:
+% 1. It fits only functions.
+% 2. For some orientations the derivative is infinity.
+
+% transform curve points into a function by placing the start and end
+% points on the x axis
+refP = [0, 0];
+refOr = getOrTwoPts(curvePts(1,:), curvePts(end,:));
+ors = [startEndOrs(1); zeros(size(curvePts,1)-2,1); startEndOrs(2)];
+[transPts, transOrs] = transPoints(curvePts, ors, refP, refOr);
+
+% fit a clamped spline to the points
+cs = spline(transPts(:,1)',transPts(:,2)'); % without start/end orientations
 %     der = 100;
 %     cs = spline(transPts(:,1)',[der, transPts(:,2)', -der]); % with (clamped)
-    xx = linspace(transPts(1,1),transPts(end,1),100); % generate more points
-    yy = ppval(cs,xx);
-    c = [xx', yy'];
-    
-    % transform curve back
-    [c] = transBackPoints(c, curvePts(1,:), -pi/2);
+xx = linspace(transPts(1,1),transPts(end,1),100); % generate more points
+yy = ppval(cs,xx);
+c = [xx', yy'];
+
+% transform curve back
+[c] = transBackPoints(c, curvePts(1,:), -pi/2);
 end
 
 function res = normRows(mat)
-    % calculate the norm of each row in mat
-    res = sqrt(sum(mat.^2,2));
+% calculate the norm of each row in mat
+res = sqrt(sum(mat.^2,2));
+end
+
+function pts = stretchCurve(pts, endPoint)
+% Stretch curve points pts such that the last point in pts will match
+% endPoint. 
+% Rotate pts such that pts(end,:) is on the X axis
+theta = -atan2(pts(end,2),pts(end,1));
+R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+pts = (R*(pts'))';
+
+% Stretch pts in both directions according to the distance to endPoint
+stretchFactor = norm(endPoint)/norm(pts(end,:));
+pts = pts.*repmat(stretchFactor,size(pts,1),2);
+
+% Put curve back in place according to the original location of endPoint
+theta = atan2(endPoint(2),endPoint(1));
+rad2deg(theta);
+R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+pts = (R*(pts'))';
+
 end

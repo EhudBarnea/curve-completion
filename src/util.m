@@ -3,7 +3,7 @@
 
 
 if ~exist('completeCurve.m','file')
-    display('Error: file completeCurve.m cannot be found, cd to the src folder');
+    disp('Error: file completeCurve.m cannot be found, cd to the src folder');
 end
 
 addpath('kde2d/');
@@ -111,6 +111,8 @@ or1 = deg2rad(30);
 p2 = [30,0];
 or2 = pi-or1;
 %--
+
+
 if ~params.matchSI
     [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
 else
