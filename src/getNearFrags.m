@@ -342,10 +342,11 @@ for i=1:toUse
         sameCurva(i) = true;
     end
 end
+
+
 % filter curves based on curvature
 nearFrags = nearFrags(sameCurva,:);
 size(nearFrags,1)
-
 
 end
 
