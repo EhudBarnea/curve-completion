@@ -11,6 +11,7 @@ src/export_fig/*
 src/kde2d/*
 !src/kde2d/where_to_get.md
 
+
 # Matlab temp/backup files
 *.asv
 *~
