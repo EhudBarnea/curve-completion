@@ -1,4 +1,4 @@
-function [] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale)
+function [meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale)
 % compare the center point statistics of curves that belong to inducer
 % pairs that are the same up to scale
 
@@ -24,8 +24,13 @@ if visEachScale
     createDir(scaleOutFolder);
 end
 
-% define maximal scale to examine
+% Define maximal scale to examine. At some point we simply don't have
+% enough samples.
 maxScale = 200;
+
+% Define minimal scale to examine. Very low scales have pretty erronous
+% annotations.
+minScale = 20;
 
 cannonScale = 50;
 
@@ -37,8 +42,8 @@ scaleSTD = zeros(maxScale, 1);
 usableScales = false(maxScale, 1);
 fragsPerScale = zeros(maxScale, 1);
 
-for s=1:maxScale % loop over scales
-%     s
+for s=minScale:maxScale % loop over scales
+    s
     
     % second inducer
     p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
@@ -100,6 +105,12 @@ end
 meanMu = mean(muPts(usableScales,:),1);
 diffMu = normRows(muPts - repmat(meanMu, size(muPts,1), 1));
 diffMu(~usableScales) = 0;
+meanDiffMu = mean(diffMu(usableScales,:),1);
+
+% calculate std difference from mean std across scales
+meanSTD = mean(scaleSTD(usableScales));
+diffSTD = abs(scaleSTD - meanSTD);
+meanDiffSTD = mean(diffSTD(usableScales));
 
 % visualize difference from average mu across scales
 plot(diffMu)
@@ -107,7 +118,7 @@ axis([0 200 0 20])
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_mu.png']);
 close all
 
-% visualize Gaussian STD at each scales
+% visualize STD at each scales
 plot(scaleSTD)
 axis([0 200 0 30])
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_std.png']);
