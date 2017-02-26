@@ -8,9 +8,7 @@ debug = false;
 
 % minimum distance between two points for which we keep the curve
 % fragments.
-minDist = 3; % in pixels (Eucledean)
-
-
+minDist = -1; % in pixels (Eucledean)
 
 relMinX = params.relMinX;
 relMaxX = params.relMaxX;
@@ -26,9 +24,6 @@ imgSizes = params.imgSizes;
 curvesFolder = params.curvesFolder;
 outFolder = params.outFolder;
 
-
-parpool(param.numParWorkers);
-
 % for i = 1:1:numImgs
 parfor i = 1:numImgs
     disp([num2str(i) ' started']);
@@ -43,7 +38,7 @@ parfor i = 1:numImgs
     baseName = imgName(1:end-4);
     % img = imread([imgsFolder imgName]);
     data = load([curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{1}; % use set 1 (each set is probably a different annotator)
+    curves = data.groundTruth{params.annotatorNum}; % use one of the annotators
     
     
     % go over all curves.
@@ -63,8 +58,11 @@ parfor i = 1:numImgs
         % according to it
         for p1=1:size(c,1)
             for p2=1:size(c,1)
+                if p1==p2
+                    continue;
+                end
                 % get curve fragment in canonincal pose
-                [fragPts, s, endPointOr] = getCanonCurve(c, p1, p2);
+                [fragPts, s, endPointOr, fragPtsAll, np1, np2, p1o, p2o] = getCanonCurve(c, p1, p2);
                 % check if was able to get cannonical curve
                 if ~s 
                     continue;
@@ -73,7 +71,7 @@ parfor i = 1:numImgs
                 
                 % check if curve fragment is too short
                 if norm(endPoint) < minDist
-                    %continue;
+                    continue;
                 end
                 
                 % check if end point is off limits
@@ -94,16 +92,20 @@ parfor i = 1:numImgs
                 frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2, endPoint(1), endPoint(2), endPointOr]];
                 
                 if debug
-                    endPoint
-                    endPointOrBin
+%                     endPoint
+%                     endPointOrBin
                     
                     close all
                     line(fragPts(:,1),fragPts(:,2));
+                    hold on
+                    plot(fragPtsAll(p1o:np1,1),fragPtsAll(p1o:np1,2),'r');
+                    hold on
+                    plot(fragPtsAll(np2:p2o,1),fragPtsAll(np2:p2o,2),'r');
                     axis equal
-                    axis([0 100 -50 50])
+                    axis([-10 100 -50 50])
 %                     axis([-200 200 -200 200])
-%                     saveas(gcf,[outFolder 'tmp/' num2str([i,j,p1,p2])]);
-%                     close all
+                    saveas(gcf,sprintf('%stmp/%d_%d_%d_%d.png',outFolder,i,j,p1,p2));
+                    close all
                 end
             end
         end
@@ -163,7 +165,7 @@ for i=1:1:numImgs
 end
 
 disp('saving')
-save([outFolder 'all_frags/frags'],'frags','numSamples','-v7.3');
+save([outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat'],'frags','numSamples','-v7.3');
 disp('done')
 
 end

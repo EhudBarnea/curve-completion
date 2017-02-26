@@ -11,7 +11,7 @@ fragsSIcounts = [];
 
 
 disp('saving')
-save([params.outFolder 'all_frags/fragsSI'],'fragsSI','-v7.3');
+save([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat'],'fragsSI','-v7.3');
 disp('done')
 end
 

@@ -53,7 +53,8 @@ for s=1:maxScale % loop over scales
         
         % rescale points to a cannonical size
         p2Cannon = ([x,y] / s) * cannonScale;
-        out.fragCenters = stretchCurve(out.fragCenters, p2Cannon);
+        out.fragCenters = stretchCurve([out.fragCenters; p2], p2Cannon);
+        out.fragCenters = out.fragCenters(1:end-1,:);
         
         % remove outlier centers
         if removeOutliers
@@ -65,7 +66,7 @@ for s=1:maxScale % loop over scales
             out.fragCenters(outliersIdx,:) = [];
         end
         
-        % fit gaussian (get std along principal directions)
+        % get mean and STD
         meanCenter = mean(out.fragCenters,1);
         centersSTD = mean(normRows(out.fragCenters-repmat(meanCenter,size(out.fragCenters,1),1)));
         
@@ -81,7 +82,7 @@ for s=1:maxScale % loop over scales
             hold on;
             viscircles(meanCenter,centersSTD(1), 'LineWidth',1);
             hold on;
-            visInducers([0, 0], 0, p2Cannon, or2);
+            visInducers([0, 0], 0, p2Cannon, or2, false);
             axis([-20,100,-70,50]);
             title(['num points = ' num2str(size(out.fragCenters,1)) '   num Diff Imgs=' num2str(out.numDiffImgs) '   STD1=' num2str(centersSTD(1))]);
             saveas(gcf,[scaleOutFolder 'c_' sprintf('%03d',s) '_pts.png']);
@@ -122,7 +123,7 @@ scatter(meanMu(1),meanMu(2),30,'r','filled');
 hold on
 p2 = [cos(endPointDirection), sin(endPointDirection)] * cannonScale;
 or2 = endPointOr;
-visInducers([0, 0], 0, p2, or2);
+visInducers([0, 0], 0, p2, or2, false);
 axis([-2 2 -2 2]*cannonScale)
 saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
 close all

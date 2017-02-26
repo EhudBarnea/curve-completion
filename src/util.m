@@ -14,11 +14,6 @@ params.curvesFolder = [params.datasetFolder 'GT_mat_CFGD_format/'];
 params.imgsFolder = [params.datasetFolder 'img/'];
 params.outFolder = '../data/';
 
-% number of parpool workers
-param.numParWorkers = 1; % default
-% param.numParWorkers = 20; % sge44
-% param.numParWorkers = 32; % sge59
-
 % get all dataset image names and sizes
 files = dir([params.imgsFolder '*jpg']);
 params.numImgs = length(files);
@@ -29,6 +24,9 @@ for i=1:size(files,1)
     img = imread([params.imgsFolder files(i).name]);
     params.imgSizes(i,:) = [size(img,1), size(img,2)];
 end
+
+% annotator number to use (there are 3)
+params.annotatorNum = 1;
 
 % ----- params for the "frags" dataset
 % all the curve fragments in cannonical pose are kept in spatio-angular
@@ -73,12 +71,11 @@ params.siMinScale = 20; % do not use curve of scale smaller than this
 % exact same pixel
 params.relMatchDist = true;
 if params.relMatchDist
-    params.matchDistFactor = 10;
+    params.matchDistFactor = 8;
 else
     params.matchDistFactor = 1;
 end
-params.matchOr = 10*pi/180;
-% params.matchOr = 2*pi/180;
+params.matchOr = 4*pi/180;
 params.matchSI = true; % match in a scale invariant way
 
 % set jet colormap
@@ -87,16 +84,16 @@ params.matchSI = true; % match in a scale invariant way
 %% train / collect data
 
 collectCurveFrags(params);
-load([params.outFolder 'all_frags/frags']);
-collectScaleInvCurveFrags(frags, params);
+load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+collectScaleInvCurveFrags(frags, params); 
 
 %% complete a single curve
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI']);
+    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
 end
  
 vis = true;
@@ -106,12 +103,16 @@ vis = true;
 % p2 = [30,90];
 % or2 = 0;
 %--
-p1 = [-30,0];
-or1 = deg2rad(30);
-p2 = [30,0];
-or2 = pi-or1;
+% p1 = [-30,0];
+% or1 = deg2rad(30);
+% p2 = [30,0];
+% or2 = pi-or1;
 %--
-
+p1 = [0,0];
+or1 = 0;
+p2 = [40,-80];
+or2 = pi/2;
+%--
 
 if ~params.matchSI
     [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
@@ -123,10 +124,10 @@ end
 %% run completion demo
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI']);
+    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
 end
  
 %img = imread('a.png');
@@ -135,10 +136,10 @@ demoCompletionSingle(frags, img, params);
 %% show completions of all curves
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI']);
+    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
 end
  
 
@@ -154,7 +155,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 for i=1:8
     
@@ -174,7 +175,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 
 visEachScale = true;
@@ -190,7 +191,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags']);
+    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 
 visEachScale = true;
@@ -202,12 +203,11 @@ rangeOr = deg2rad(0:45:315);
 % get all pairs of endPointDirection and endPointOr
 [p,q] = meshgrid(rangeDir, rangeOr);
 rangePairs = [p(:) q(:)];
-parpool(param.numParWorkers);
 parfor i = 1:size(rangePairs,1)
-    disp([num2str(i) '/' num2str(size(rangePairs,1)) ' start']);
+    fprintf('%d/%d start\n',num2str(i),num2str(size(rangePairs,1)));
     endPointDirection = rangePairs(i,1);
     endPointOr = rangePairs(i,2);
     analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
-    disp([num2str(i) '/' num2str(size(rangePairs,1)) ' done']);
+    fprintf('%d/%d done\n',num2str(i),num2str(size(rangePairs,1)));
 end
 

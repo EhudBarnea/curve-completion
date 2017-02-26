@@ -18,7 +18,6 @@ maxFragsToShow = 5;
 % numCurveRepPts = 3;
 numCurveRepPts = 16;
 
-interpolateCurve = false;
 
 c = [];
 out = [];
@@ -78,7 +77,7 @@ for i=1:numFragsToUse
     imgName = params.imgNames{imgNum};
     baseName = imgName(1:end-4);
     data = load([params.curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{1}; % use set 1 (each set is a different annotator)
+    curves = data.groundTruth{params.annotatorNum}; % use one of the annotators
     c = fixCurve(curves{cNum}, params.imgSizes(imgNum,:));
     
     % transform to canonincal pose
@@ -124,12 +123,7 @@ out.numFrags = numFrags;
 c = genCurveMean(allRepPts, numCurveRepPts, params);
 % c = genCurveKDE(allRepPts, numCurveRepPts, params);
 
-% interpolate curve
 c = [0,0; c; endPoint];
-if interpolateCurve
-    c = interpCurve(c, [0;endPointOr]);
-end
-
 
 if vis
     % draw mean curve
@@ -138,9 +132,10 @@ if vis
     plot(c(:,1), c(:,2), 'Color', 'r');
     
     hold on
-    scatter(0,0,7,'r','filled')
-    hold on
-    scatter(endPoint(1),endPoint(2),7,'r','filled')
+    visInducers([0, 0], 0, endPoint, endPointOr, true);
+%     scatter(0,0,7,'r','filled')
+%     hold on
+%     scatter(endPoint(1),endPoint(2),7,'r','filled')
     axis equal
     axis([-200 200 -200 200])
     title(['Num shown curves = ' num2str(min(maxFragsToShow,numFragsToUse)) '   Num used curves = ' num2str(numFragsToUse) '   num Diff Imgs=' num2str(numDiffImgs)])
@@ -192,34 +187,7 @@ i=3;
 curvePts = [];
 end
 
-function c = interpCurve(curvePts, startEndOrs)
-% interpolate a smooth curve for the set of points curveRepPts with
-% orientations for the first and last points startEndOrs. This
-% uses a clamped spline, which is a spline for each conditions are
-% given for the end points in the form of their derivatives.
 
-% A clamped spline is problematic for two reasons:
-% 1. It fits only functions.
-% 2. For some orientations the derivative is infinity.
-
-% transform curve points into a function by placing the start and end
-% points on the x axis
-refP = [0, 0];
-refOr = getOrTwoPts(curvePts(1,:), curvePts(end,:));
-ors = [startEndOrs(1); zeros(size(curvePts,1)-2,1); startEndOrs(2)];
-[transPts, transOrs] = transPoints(curvePts, ors, refP, refOr);
-
-% fit a clamped spline to the points
-cs = spline(transPts(:,1)',transPts(:,2)'); % without start/end orientations
-%     der = 100;
-%     cs = spline(transPts(:,1)',[der, transPts(:,2)', -der]); % with (clamped)
-xx = linspace(transPts(1,1),transPts(end,1),100); % generate more points
-yy = ppval(cs,xx);
-c = [xx', yy'];
-
-% transform curve back
-[c] = transBackPoints(c, curvePts(1,:), -pi/2);
-end
 
 function res = normRows(mat)
 % calculate the norm of each row in mat

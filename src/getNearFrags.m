@@ -22,7 +22,8 @@ if strcmp(method,'bin')
 elseif strcmp(method,'rad')
     nearFrags = getNearFragsRad(endPoint, endPointOr, frags, params);
 elseif strcmp(method,'si')
-    nearFrags = getNearFragsSI(endPoint, endPointOr, frags, params);
+            nearFrags = getNearFragsSI(endPoint, endPointOr, frags, params);
+%     nearFrags = getNearFragsSI_withCurva(endPoint, endPointOr, frags, params);
 else
     nearFrags = [];
     disp('Error: no such method');
@@ -165,91 +166,6 @@ nearFrags = relevantFrags(nearFragsID,:);
 [~, idx, ~] = unique(nearFrags(:,1:2),'rows');
 nearFrags = nearFrags(idx,:);
 
-% --- test - keep fragments with the same curvature
-indCurva = [0,0]; % line
-% the arc length to use for the curvature calculation (by circle fitting)
-% is determined is the distance between the two inducers divided by this
-% amount.
-cirlceFitArcLenFactor = 6; 
-minPtsForFit = 4;
-
-sameCurva = false(size(nearFrags,1),1);
-toUse = size(nearFrags,1);
-% toUse = 1000;
-for i=1:toUse
-    imgNum = nearFrags(i,1);
-    cNum = nearFrags(i,2); % curve num
-    fragP1 = nearFrags(i,3);
-    fragP2 = nearFrags(i,4);
-    
-    % load curves
-    imgName = params.imgNames{imgNum};
-    baseName = imgName(1:end-4);
-    data = load([params.curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{1}; % use set 1 (each set is a different annotator)
-    c = fixCurve(curves{cNum}, params.imgSizes(imgNum,:));
-    
-    % transform to canonincal pose
-    [fragPts,~,~,fragPtsAll] = getCanonCurve(c, fragP1, fragP2);
-    
-    
-    % stretch
-    fragPtsAll = [fragPtsAll; fragPts(end,:)];
-    fragPtsAll = stretchCurve(fragPtsAll, endPoint);
-    fragPtsAll = fragPtsAll(1:end-1,:);
-    fragPts = stretchCurve(fragPts, endPoint);
-    
-    % get curvature points (to calculate the curvature between them)
-    cvp1=[0,0];
-    cvp2=[0,0];
-    if fragP1 < fragP2
-        cvp1(2) = fragP1;
-        cvp2(1) = fragP2;
-    else
-        cvp1(2) = size(fragPtsAll,1)-fragP1+1;
-        cvp2(1) = size(fragPtsAll,1)-fragP2+1;
-    end
-    arcLenToP1 = getArcLength(fragPtsAll,cvp1(2),1);
-    arcLenFromP2 = getArcLength(fragPtsAll,cvp2(1),size(fragPtsAll,1));
-    cirlceFitArcLen = norm(fragPts(end,:))/cirlceFitArcLenFactor;
-    cvp1(1) = find(arcLenToP1 < cirlceFitArcLen,1);
-    cvp2(2) = find(arcLenFromP2 < cirlceFitArcLen,1,'last');
-    
-    % make sure we have enough points (3 are enough, but more points = less noise)
-    hasCurva = true;
-    if cvp1(2)-cvp1(1)+1 < minPtsForFit || cvp2(2)-cvp2(1)+1 < minPtsForFit
-        hasCurva = false;
-    end
-    
-    % calculate curvature
-    if hasCurva
-        [xc1,yc1,R1,~,isLine1] = circfit(fragPtsAll(cvp1(1):cvp1(2),1),fragPtsAll(cvp1(1):cvp1(2),2));
-        [xc2,yc2,R2,~,isLine2] = circfit(fragPtsAll(cvp2(1):cvp2(2),1),fragPtsAll(cvp2(1):cvp2(2),2));
-        if ~isLine1
-            curva1 = 1/R1;
-        else
-            curva1 = 0;
-        end
-        if ~isLine2
-            curva2 = 1/R2;
-        else
-            curva2 = 0;
-        end
-    end
-%     if hasCurva
-%         fprintf('%f:%f,%f\n',cirlceFitArcLen,curva1, curva2);
-%     else
-%         fprintf('no\n');
-%     end
-    th = 0.02;
-    if hasCurva && abs(curva1-indCurva(1))<th && abs(curva2-indCurva(2))<th
-        sameCurva(i) = true;
-    end
-end
-% filter curves based on curvature
-nearFrags = nearFrags(sameCurva,:);
-size(nearFrags,1)
-% ---
 end
 
 
@@ -271,10 +187,11 @@ indCurva = [0,0]; % line
 % the arc length to use for the curvature calculation (by circle fitting)
 % is determined is the distance between the two inducers divided by this
 % amount.
-cirlceFitArcLenFactor = 6; 
+cirlceFitArcLenFactor = 6;
 minPtsForFit = 4;
 
 sameCurva = false(size(nearFrags,1),1);
+center = zeros(size(nearFrags,1),2);
 toUse = size(nearFrags,1);
 % toUse = 1000;
 for i=1:toUse
@@ -300,6 +217,8 @@ for i=1:toUse
     fragPtsAll = fragPtsAll(1:end-1,:);
     fragPts = stretchCurve(fragPts, endPoint);
     
+    center(i,:) = fragPts(floor(size(fragPts,1)/2),:);
+    
     % get curvature points (to calculate the curvature between them)
     cvp1=[0,0];
     cvp2=[0,0];
@@ -313,19 +232,24 @@ for i=1:toUse
     arcLenToP1 = getArcLength(fragPtsAll,cvp1(2),1);
     arcLenFromP2 = getArcLength(fragPtsAll,cvp2(1),size(fragPtsAll,1));
     cirlceFitArcLen = norm(fragPts(end,:))/cirlceFitArcLenFactor;
+    cirlceFitArcLen=25;
     cvp1(1) = find(arcLenToP1 < cirlceFitArcLen,1);
     cvp2(2) = find(arcLenFromP2 < cirlceFitArcLen,1,'last');
     
     % make sure we have enough points (3 are enough, but more points = less noise)
     hasCurva = true;
-    if cvp1(2)-cvp1(1)+1 < minPtsForFit || cvp2(2)-cvp2(1)+1 < minPtsForFit
+    numPtsSec1 = cvp1(2)-cvp1(1)+1;
+    numPtsSec2 = cvp2(2)-cvp2(1)+1;
+    if numPtsSec1 < minPtsForFit || numPtsSec2 < minPtsForFit
         hasCurva = false;
     end
     
     % calculate curvature
     if hasCurva
+        % fit circle
         [xc1,yc1,R1,~,isLine1] = circfit(fragPtsAll(cvp1(1):cvp1(2),1),fragPtsAll(cvp1(1):cvp1(2),2));
         [xc2,yc2,R2,~,isLine2] = circfit(fragPtsAll(cvp2(1):cvp2(2),1),fragPtsAll(cvp2(1):cvp2(2),2));
+        % set curvature (for normal configurations or colinear points)
         if ~isLine1
             curva1 = 1/R1;
         else
@@ -336,27 +260,95 @@ for i=1:toUse
         else
             curva2 = 0;
         end
-    end
-    th = 0.02;
-    if hasCurva && abs(curva1-indCurva(1))<th && abs(curva2-indCurva(2))<th
-        sameCurva(i) = true;
+        
+        % check if curvature is similar
+        th = 0.02;
+        if abs(curva1-indCurva(1))<th && abs(curva2-indCurva(2))<th
+            sameCurva(i) = true;
+        end
+        
+        % ------- vis
+        % Visualize curve and curvature
+        if ~sameCurva(i) || true
+            continue;
+        end
+        close all
+        plot(fragPtsAll(:,1),fragPtsAll(:,2));
+        hold on
+        scatter(fragPtsAll(cvp1(2),1),fragPtsAll(cvp1(2),2),20)
+        hold on
+        scatter(fragPtsAll(cvp2(1),1),fragPtsAll(cvp2(1),2),20)
+        
+        th = linspace(0,2*pi,80)';
+        if R1<100
+            xe = R1*cos(th)+xc1;
+            ye = R1*sin(th)+yc1;
+            plot([xe;xe(1)],[ye;ye(1)]);
+        end
+        hold on
+        if R2<100
+            xe = R2*cos(th)+xc2;
+            ye = R2*sin(th)+yc2;
+            plot([xe;xe(1)],[ye;ye(1)]);
+        end
+        fprintf('%f,%f\n',1/R1,1/R2);
+        
+        plot(fragPtsAll(cvp1(1):cvp1(2),1),fragPtsAll(cvp1(1):cvp1(2),2),'r');
+        hold on
+        plot(fragPtsAll(cvp2(1):cvp2(2),1),fragPtsAll(cvp2(1):cvp2(2),2),'r');
+        hold on
+        axis([-200 200 -200 200]);
+        %         axis equal
+        
+        LogicalStr = {'Circle', 'Line'};
+        title(sprintf('%s %d,%s %d',LogicalStr{isLine1+1},numPtsSec1,LogicalStr{isLine2+1},numPtsSec2));
+        saveas(gcf,['/Users/ehud/Downloads/curva/tmp/' num2str(i) '.png']);
+        close all
+        % ------- end vis
     end
 end
 
+% ---- vis
+close all
+
+subplot(1,2,1)
+meanCenter = mean(center,1);
+centersSTD = mean(normRows(center-repmat(meanCenter,size(center,1),1)));
+plot(center(:,1),center(:,2),'b.');
+hold on
+plot(center(sameCurva,1),center(sameCurva,2),'g.');
+hold on
+visInducers([0,0],0,endPoint,endPointOr,false);
+hold on
+scatter(meanCenter(1),meanCenter(2),30,'r','filled');
+hold on;
+viscircles(meanCenter,centersSTD(1), 'LineWidth',1);
+hold on;
+axis([-200 200 -200 200]);
+title(sprintf('(%f,%f) %f',meanCenter(1),meanCenter(2),centersSTD));
+hold on
+
+
+subplot(1,2,2)
+meanCenter = mean(center(sameCurva,:),1);
+centersSTD = mean(normRows(center(sameCurva,:)-repmat(meanCenter,size(center(sameCurva,:),1),1)));
+plot(center(sameCurva,1),center(sameCurva,2),'b.');
+hold on
+visInducers([0,0],0,endPoint,endPointOr,false);
+hold on
+scatter(meanCenter(1),meanCenter(2),30,'r','filled');
+hold on;
+viscircles(meanCenter,centersSTD(1), 'LineWidth',1);
+hold on;
+axis([-200 200 -200 200]);
+title(sprintf('(%f,%f) %f',meanCenter(1),meanCenter(2),centersSTD));
+% ---- end vis
 
 % filter curves based on curvature
 nearFrags = nearFrags(sameCurva,:);
-size(nearFrags,1)
 
 end
 
-
-function angDist = angularDist(or1, or2)
-% calculate the angular distance between each value in the vector or1,
-% and the scalar or2
-angDist = mod(or1 - or2,2*pi);
-angDist(angDist > pi) = 2*pi - angDist(angDist > pi);
-end
 
 
 function res = normRows(mat)
@@ -364,30 +356,3 @@ function res = normRows(mat)
 res = sqrt(sum(mat.^2,2));
 end
 
-
-% Visualize curve and curvature
-% plot(fragPtsAll(:,1),fragPtsAll(:,2));
-% hold on
-% scatter(fragPtsAll(cvp1(2),1),fragPtsAll(cvp1(2),2),20)
-% hold on
-% scatter(fragPtsAll(cvp2(1),1),fragPtsAll(cvp2(1),2),20)
-% 
-% th = linspace(0,2*pi,80)';
-% if R1<100
-%     xe = R1*cos(th)+xc1; 
-%     ye = R1*sin(th)+yc1;
-%     plot([xe;xe(1)],[ye;ye(1)]);
-% end
-% hold on
-% if R2<100
-%     xe = R2*cos(th)+xc2; 
-%     ye = R2*sin(th)+yc2;
-%     plot([xe;xe(1)],[ye;ye(1)]);
-% end
-% fprintf('%f,%f\n',1/R1,1/R2);
-
-% plot(fragPtsAll(cvp1(1):cvp1(2),1),fragPtsAll(cvp1(1):cvp1(2),2),'r');
-% hold on
-% plot(fragPtsAll(cvp2(1):cvp2(2),1),fragPtsAll(cvp2(1):cvp2(2),2),'r');
-% hold on
-% axis equal

@@ -11,9 +11,12 @@ relMaxY = params.relMaxY;
 p1 = [0,0];
 or1 = 0;
 
-for x=0:10:relMaxX%relMinX:10:relMaxX
+xRange = 0:10:relMaxX; %relMinX:10:relMaxX;
+parfor xi=1:numel(xRange)
+    x=xRange(xi);
     for y=0:-10:relMinY % we mirror curves in y>0
-        p2 = [x,y]
+        p2 = [x,y];
+        fprintf('%d,%d\n',x,y);
         
         for ob=1:params.numOrBins
             or2 = getOrFromBin(ob, params.orBinSize);
@@ -22,7 +25,6 @@ for x=0:10:relMaxX%relMinX:10:relMaxX
             % visualize curves and statistics
             if isUsable
                 % save figure
-                visInducers([0, 0], 0, p2, or2);
                 saveas(gcf,[params.outFolder 'completions/tmp/c_' num2str(x) '_' num2str(y) '_' num2str(ob) '_curves.png']);
                 close all;
             end
