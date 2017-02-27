@@ -178,12 +178,14 @@ if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 
-visEachScale = true;
+visEachScale = false;
 
-endPointDirection = deg2rad(340);
-endPointOr = deg2rad(135);
-analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
-display('done');
+% endPointDirection = deg2rad(340);
+% endPointOr = deg2rad(135);
+endPointDirection = deg2rad(335);
+endPointOr = deg2rad(180);
+[meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
+disp('done');
 
 %% Analyse scale invariance - all configurations
 
@@ -194,7 +196,9 @@ if ~exist('frags','var')
     load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
 end
 
-visEachScale = true;
+visEachScale = false;
+
+measuresOutFolder = [params.outFolder 'stats/scale_analysis/'];
 
 % loop over different end point directions and end point orientations. The range variables are used since
 % parfor requires consecutive integers.
@@ -202,12 +206,25 @@ rangeDir = deg2rad(270:5:360);
 rangeOr = deg2rad(0:45:315);
 % get all pairs of endPointDirection and endPointOr
 [p,q] = meshgrid(rangeDir, rangeOr);
+% prepare matrices to keep analysis results
+confMeanSTD = zeros(size(p));
+confMeanDiffMu = zeros(size(p));
+confMeanDiffSTD = zeros(size(p));
+confLineIntAngle = zeros(size(p));
 rangePairs = [p(:) q(:)];
+% for i = 1:size(rangePairs,1)
 parfor i = 1:size(rangePairs,1)
-    fprintf('%d/%d start\n',num2str(i),num2str(size(rangePairs,1)));
+    fprintf('%d/%d start\n',i,size(rangePairs,1));
     endPointDirection = rangePairs(i,1);
     endPointOr = rangePairs(i,2);
-    analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
-    fprintf('%d/%d done\n',num2str(i),num2str(size(rangePairs,1)));
+    
+    % analyze scales
+    [intAngle, meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale);
+    confLineIntAngle(i) = intAngle;
+    confMeanSTD(i) = meanSTD;
+    confMeanDiffMu(i) = meanDiffMu;
+    confMeanDiffSTD(i) = meanDiffSTD;
+    
+    fprintf('%d/%d done\n',i,size(rangePairs,1));
 end
-
+save([measuresOutFolder 'measures.mat'],'confLineIntAngle','confMeanSTD','confMeanDiffMu','confMeanDiffSTD');

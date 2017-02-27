@@ -1,4 +1,4 @@
-function [meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale)
+function [intAngle, meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDirection, endPointOr, frags, params, visEachScale)
 % compare the center point statistics of curves that belong to inducer
 % pairs that are the same up to scale
 
@@ -6,6 +6,8 @@ function [meanSTD, meanDiffMu, meanDiffSTD] = analyzeScaleInvariance(endPointDir
 % endPointOr - orientation of the second inducer.
 % visEachScale - visualize the center point distribtion at each scale
 % (defualt=false).
+
+visScaleSummary = true;
 
 if nargin < 5
     visEachScale = false;
@@ -43,7 +45,7 @@ usableScales = false(maxScale, 1);
 fragsPerScale = zeros(maxScale, 1);
 
 for s=minScale:maxScale % loop over scales
-    s
+%     s
     
     % second inducer
     p2 = [cos(endPointDirection), sin(endPointDirection)] * s;
@@ -101,6 +103,9 @@ for s=minScale:maxScale % loop over scales
 end
 
 
+p2 = [cos(endPointDirection), sin(endPointDirection)] * cannonScale;
+or2 = endPointOr;
+
 % calculate difference from average mu across scales
 meanMu = mean(muPts(usableScales,:),1);
 diffMu = normRows(muPts - repmat(meanMu, size(muPts,1), 1));
@@ -112,32 +117,37 @@ meanSTD = mean(scaleSTD(usableScales));
 diffSTD = abs(scaleSTD - meanSTD);
 meanDiffSTD = mean(diffSTD(usableScales));
 
-% visualize difference from average mu across scales
-plot(diffMu)
-axis([0 200 0 20])
-saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_mu.png']);
-close all
+% calculate line intersection angle representation
+intAngle = getLineIntAngle(p2, or2);
 
-% visualize STD at each scales
-plot(scaleSTD)
-axis([0 200 0 30])
-saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_std.png']);
-close all
-
-% visualize number of fragments at each scale
-plot(fragsPerScale)
-saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
-close all
-
-% visualize inducers
-scatter(meanMu(1),meanMu(2),30,'r','filled');
-hold on
-p2 = [cos(endPointDirection), sin(endPointDirection)] * cannonScale;
-or2 = endPointOr;
-visInducers([0, 0], 0, p2, or2, false);
-axis([-2 2 -2 2]*cannonScale)
-saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
-close all
+if visScaleSummary
+    % visualize difference from average mu across scales
+    plot(diffMu)
+    axis([0 200 0 20])
+    saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_mu.png']);
+    close all
+    
+    % visualize STD at each scales
+    plot(scaleSTD)
+    axis([0 200 0 30])
+    saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_std.png']);
+    close all
+    
+    % visualize number of fragments at each scale
+    plot(fragsPerScale)
+    saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_nFrags.png']);
+    close all
+    
+    % visualize inducers
+    scatter(meanMu(1),meanMu(2),30,'r','filled');
+    hold on
+    visInducers([0, 0], 0, p2, or2, false);
+    axis([-2 2 -2 2]*cannonScale)
+    titleStr = sprintf('%.0f: meanSTD=%.1f, meanDiffMu=%.1f, meanDiffSTD=%.1f',rad2deg(intAngle),meanSTD,meanDiffMu,meanDiffSTD);
+    title(titleStr)
+    saveas(gcf,[allScalesOutFolder num2str(rad2deg(endPointDirection)) '_' num2str(rad2deg(endPointOr))  '_ind.png']);
+    close all
+end
 
 end
 
