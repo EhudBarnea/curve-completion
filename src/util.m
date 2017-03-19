@@ -25,9 +25,6 @@ for i=1:size(files,1)
     params.imgSizes(i,:) = [size(img,1), size(img,2)];
 end
 
-% annotator number to use (there are 3)
-params.annotatorNum = 1;
-
 % ----- params for the "frags" dataset
 % all the curve fragments in cannonical pose are kept in spatio-angular
 % bins according to these parameters
@@ -84,16 +81,16 @@ params.matchSI = true; % match in a scale invariant way
 %% train / collect data
 
 collectCurveFrags(params);
-load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+load([params.outFolder 'all_frags/frags.mat']);
 collectScaleInvCurveFrags(frags, params); 
 
 %% complete a single curve
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/fragsSI.mat']);
 end
  
 vis = true;
@@ -124,10 +121,10 @@ end
 %% run completion demo
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/fragsSI.mat']);
 end
  
 %img = imread('a.png');
@@ -136,10 +133,10 @@ demoCompletionSingle(frags, img, params);
 %% show completions of all curves
 
 if ~exist('frags','var') && ~params.matchSI
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 if ~exist('fragsSI','var') && params.matchSI
-    load([params.outFolder 'all_frags/fragsSI' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/fragsSI.mat']);
 end
  
 
@@ -155,7 +152,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 for i=1:8
     
@@ -175,7 +172,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 
 visEachScale = false;
@@ -193,7 +190,7 @@ if params.matchSI
     disp('Error: incorrect configuration');
 end
 if ~exist('frags','var')
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 
 visEachScale = false;
@@ -228,3 +225,20 @@ parfor i = 1:size(rangePairs,1)
     fprintf('%d/%d done\n',i,size(rangePairs,1));
 end
 save([measuresOutFolder 'measures.mat'],'confLineIntAngle','confMeanSTD','confMeanDiffMu','confMeanDiffSTD');
+
+% subplot(2,2,1)
+% imagesc(rad2deg(confLineIntAngle))
+% title('confLineIntAngle')
+% colorbar
+% subplot(2,2,2)
+% imagesc(confMeanSTD)
+% title('confMeanSTD')
+% colorbar
+% subplot(2,2,3)
+% imagesc(confMeanDiffMu)
+% title('confMeanDiffMu')
+% colorbar
+% subplot(2,2,4)
+% imagesc(confMeanDiffSTD)
+% title('confMeanDiffSTD')
+% colorbar

@@ -33,79 +33,83 @@ parfor i = 1:numImgs
     % keep the number of samples (edge fragments) for each end point.
     numSamples = zeros(numBins(1), numBins(2), numOrBins);
     
-    % load image curves
-    imgName = imgNames{i};
-    baseName = imgName(1:end-4);
-    % img = imread([imgsFolder imgName]);
-    data = load([curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{params.annotatorNum}; % use one of the annotators
-    
-    
-    % go over all curves.
-    % A curve is an Nx2 list of ordered points where the first
-    % element is the x coordinate. curves are a list of points, not pixels,
-    % so there may be a gap between adjacent points.
-    for j=1:length(curves)
-        if mod(j,10) == 0
-            disp([num2str(i) ' - ' num2str(j) '/' num2str(length(curves))]);
-        end
+    % go over the different annotators
+    for annotatorNum=1:3
         
-        % get curve
-        c = fixCurve(curves{j}, imgSizes(i,:));
+        % load image curves
+        imgName = imgNames{i};
+        baseName = imgName(1:end-4);
+        % img = imread([imgsFolder imgName]);
+        data = load([curvesFolder baseName],'groundTruth');
+        curves = data.groundTruth{annotatorNum}; % use one of the annotators
         
-        % get curve fragments between each 2 curve points. each point in
-        % turn serves as a reference and the curve fragment is organized
-        % according to it
-        for p1=1:size(c,1)
-            for p2=1:size(c,1)
-                if p1==p2
-                    continue;
-                end
-                % get curve fragment in canonincal pose
-                [fragPts, s, endPointOr, fragPtsAll, np1, np2, p1o, p2o] = getCanonCurve(c, p1, p2);
-                % check if was able to get cannonical curve
-                if ~s 
-                    continue;
-                end
-                endPoint = fragPts(end,:);
-                
-                % check if curve fragment is too short
-                if norm(endPoint) < minDist
-                    continue;
-                end
-                
-                % check if end point is off limits
-                if endPoint(1)>=relMaxX || endPoint(1)<=relMinX || endPoint(2)>=relMaxY || endPoint(2)<=relMinX
-                    continue;
-                end
-                
-                % get end point bin
-                endPointBin = floor((endPoint - [relMinX, relMinY])/binSize) + 1;
-                if endPointBin(1) > size(frags,1) || endPointBin(2) > size(frags,2)
-                    continue;
-                end
-                
-                % get end point orientation bin
-                endPointOrBin = getOrBin(endPointOr, orBinSize, numOrBins);
-                
-                % place fragment in frags array according to the end point
-                frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2, endPoint(1), endPoint(2), endPointOr]];
-                
-                if debug
-%                     endPoint
-%                     endPointOrBin
+        
+        % go over all curves.
+        % A curve is an Nx2 list of ordered points where the first
+        % element is the x coordinate. curves are a list of points, not pixels,
+        % so there may be a gap between adjacent points.
+        for j=1:length(curves)
+            if mod(j,10) == 0
+                disp([num2str(i) ',' num2str(annotatorNum) ' - ' num2str(j) '/' num2str(length(curves))]);
+            end
+            
+            % get curve
+            c = fixCurve(curves{j}, imgSizes(i,:));
+            
+            % get curve fragments between each 2 curve points. each point in
+            % turn serves as a reference and the curve fragment is organized
+            % according to it
+            for p1=1:size(c,1)
+                for p2=1:size(c,1)
+                    if p1==p2
+                        continue;
+                    end
+                    % get curve fragment in canonincal pose
+                    [fragPts, s, endPointOr, fragPtsAll, np1, np2, p1o, p2o] = getCanonCurve(c, p1, p2);
+                    % check if was able to get cannonical curve
+                    if ~s
+                        continue;
+                    end
+                    endPoint = fragPts(end,:);
                     
-                    close all
-                    line(fragPts(:,1),fragPts(:,2));
-                    hold on
-                    plot(fragPtsAll(p1o:np1,1),fragPtsAll(p1o:np1,2),'r');
-                    hold on
-                    plot(fragPtsAll(np2:p2o,1),fragPtsAll(np2:p2o,2),'r');
-                    axis equal
-                    axis([-10 100 -50 50])
-%                     axis([-200 200 -200 200])
-                    saveas(gcf,sprintf('%stmp/%d_%d_%d_%d.png',outFolder,i,j,p1,p2));
-                    close all
+                    % check if curve fragment is too short
+                    if norm(endPoint) < minDist
+                        continue;
+                    end
+                    
+                    % check if end point is off limits
+                    if endPoint(1)>=relMaxX || endPoint(1)<=relMinX || endPoint(2)>=relMaxY || endPoint(2)<=relMinX
+                        continue;
+                    end
+                    
+                    % get end point bin
+                    endPointBin = floor((endPoint - [relMinX, relMinY])/binSize) + 1;
+                    if endPointBin(1) > size(frags,1) || endPointBin(2) > size(frags,2)
+                        continue;
+                    end
+                    
+                    % get end point orientation bin
+                    endPointOrBin = getOrBin(endPointOr, orBinSize, numOrBins);
+                    
+                    % place fragment in frags array according to the end point
+                    frags{endPointBin(1),endPointBin(2),endPointOrBin} = [frags{endPointBin(1),endPointBin(2),endPointOrBin}; [i, j, p1, p2, endPoint(1), endPoint(2), endPointOr, annotatorNum]];
+                    
+                    if debug
+                        %                     endPoint
+                        %                     endPointOrBin
+                        
+                        close all
+                        line(fragPts(:,1),fragPts(:,2));
+                        hold on
+                        plot(fragPtsAll(p1o:np1,1),fragPtsAll(p1o:np1,2),'r');
+                        hold on
+                        plot(fragPtsAll(np2:p2o,1),fragPtsAll(np2:p2o,2),'r');
+                        axis equal
+                        axis([-10 100 -50 50])
+                        %                     axis([-200 200 -200 200])
+                        saveas(gcf,sprintf('%stmp/%d_%d_%d_%d.png',outFolder,i,j,p1,p2));
+                        close all
+                    end
                 end
             end
         end
@@ -123,12 +127,12 @@ parfor i = 1:numImgs
                 if size(f,1) == 0
                     continue;
                 end
-                diffCurves = unique(f(:,2));
-                numDiffCurves = length(diffCurves);
+                diffCurves = unique([f(:,2), f(:,8)],'rows');
+                numDiffCurves = size(diffCurves,1);
                 filtered = zeros(numDiffCurves,size(f,2));
                 for k=1:numDiffCurves
                     % pick random fragment
-                    curveFrags = find(f(:,2)==diffCurves(k));
+                    curveFrags = find(f(:,2)==diffCurves(k,1) & f(:,8)==diffCurves(k,2));
                     pickedFrag = f(curveFrags(randi(length(curveFrags))),:);
                     filtered(k,:) = pickedFrag;
                 end
@@ -165,7 +169,7 @@ for i=1:1:numImgs
 end
 
 disp('saving')
-save([outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat'],'frags','numSamples','-v7.3');
+save([outFolder 'all_frags/frags.mat'],'frags','numSamples','-v7.3');
 disp('done')
 
 end

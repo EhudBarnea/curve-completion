@@ -44,7 +44,11 @@ scaleSTD = zeros(maxScale, 1);
 usableScales = false(maxScale, 1);
 fragsPerScale = zeros(maxScale, 1);
 
-for s=minScale:maxScale % loop over scales
+% keep all curve centers across all scales
+scaleCenters = zeros(0,2);
+scaleCentersO = zeros(0,1); % origin scale
+
+for s=31:32%minScale:maxScale % loop over scales
 %     s
     
     % second inducer
@@ -72,6 +76,10 @@ for s=minScale:maxScale % loop over scales
             outliers = out.fragCenters(outliersIdx,:);
             out.fragCenters(outliersIdx,:) = [];
         end
+        
+        % keep centers
+        scaleCenters = [scaleCenters; out.fragCenters];
+        scaleCentersO = [scaleCentersO; s*ones(size(out.fragCenters,1),1)];
         
         % get mean and STD
         meanCenter = mean(out.fragCenters,1);
@@ -101,6 +109,12 @@ for s=minScale:maxScale % loop over scales
         usableScales(s) = true;
     end
 end
+
+% p = anova1(scaleCenters',scaleCentersO','off')
+% [h,p] = ttest2(scaleCenters(scaleCentersO==31,:),scaleCenters(scaleCentersO==32,:),'Vartype','unequal')
+% x=scaleCenters(scaleCentersO==31,2);
+% y=scaleCenters(scaleCentersO==32,2);
+% [p,h] = ranksum(x,y);
 
 
 p2 = [cos(endPointDirection), sin(endPointDirection)] * cannonScale;

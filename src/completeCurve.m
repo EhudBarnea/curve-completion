@@ -72,12 +72,13 @@ for i=1:numFragsToUse
     cNum = endPointFrags(i,2); % curve num
     fragP1 = endPointFrags(i,3);
     fragP2 = endPointFrags(i,4);
+    annotatorNum = endPointFrags(i,8);
     
     % load curves
     imgName = params.imgNames{imgNum};
     baseName = imgName(1:end-4);
     data = load([params.curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{params.annotatorNum}; % use one of the annotators
+    curves = data.groundTruth{annotatorNum}; % use one of the annotators
     c = fixCurve(curves{cNum}, params.imgSizes(imgNum,:));
     
     % transform to canonincal pose

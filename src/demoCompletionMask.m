@@ -16,7 +16,7 @@ showEdgeImg = true;
 numCurveRepPts = 5;
 
 if ~exist('frags')
-    load([params.outFolder 'all_frags/frags' num2str(params.annotatorNum) '.mat']);
+    load([params.outFolder 'all_frags/frags.mat']);
 end
 
 
