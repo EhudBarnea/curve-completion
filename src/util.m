@@ -94,22 +94,25 @@ if ~exist('fragsSI','var') && params.matchSI
 end
  
 vis = true;
-%--
-% p1 = [30,30];
-% or1 = 0;
-% p2 = [30,90];
-% or2 = 0;
-%--
-% p1 = [-30,0];
-% or1 = deg2rad(30);
-% p2 = [30,0];
-% or2 = pi-or1;
-%--
-p1 = [0,0];
-or1 = 0;
-p2 = [40,-80];
-or2 = pi/2;
-%--
+
+opt = 2;
+if opt == 1
+    p1 = [30,30];
+    or1 = 0;
+    p2 = [30,90];
+    or2 = 0;
+elseif opt == 2
+    p1 = [-30,0];
+    or1 = deg2rad(30);
+    p2 = [30,0];
+    or2 = pi-or1;
+elseif opt == 3
+    p1 = [0,0];
+    or1 = 0;
+    p2 = [40,-80];
+    or2 = pi/2;
+end
+
 
 if ~params.matchSI
     [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis);
