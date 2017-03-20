@@ -27,12 +27,12 @@ counts = zeros(params.siNumAngBins, params.siNumOrBins);
 if ~onlyCount
     fragsSI = cell(params.siNumAngBins, params.siNumOrBins);
     for i = 1:numel(fragsSI)
-        fragsSI{i} = zeros(fragsSIcounts(i), 8);
+        fragsSI{i} = zeros(fragsSIcounts(i), 9);
     end
 end
 
 % Loop over all the frags array. for fragsSI create a bin for every angular
-% distance. put every frag in fragsSI and also keep it angle. when doing
+% distance. put every frag in fragsSI and also keep its angle. when doing
 % loopup convert the relative distance to angles
 for i = 1:numel(frags)
     if mod(i,1000) == 0
@@ -47,6 +47,7 @@ for i = 1:numel(frags)
         fragP2 = frags{i}(j,4);
         endPoint = frags{i}(j,5:6);
         endPointOr = frags{i}(j,7);
+        annotatorNum = frags{i}(j,8);
         
         % Get angular location bin of end point.
         % Discretize the [pi,2*pi] region into bins
@@ -62,7 +63,7 @@ for i = 1:numel(frags)
         % get bin of end point orientation
         orBin = getOrBin(endPointOr, params.siOrBinSize, params.siNumOrBins);
         
-        c(8) = angleFromX;
+        c(9) = angleFromX;
         counts(angLocBin,orBin) = counts(angLocBin,orBin) + 1;
         if ~onlyCount
             fragsSI{angLocBin,orBin}(counts(angLocBin,orBin),:) = c;

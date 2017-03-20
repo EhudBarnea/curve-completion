@@ -94,6 +94,7 @@ relevantFrags = cat(1,frags{boxX(1):boxX(2),boxY(1):boxY(2),:});
 % 5. End point X relative to start
 % 6. End point Y relative to start
 % 7. End point orientation relative to start
+% 8. Annotator number
 
 % filter (keep) the relevant (close enough) frags
 nearFragsID = normRows(relevantFrags(:,5:6)-repmat(endPoint,size(relevantFrags,1),1)) < matchDist & ...
@@ -101,7 +102,7 @@ nearFragsID = normRows(relevantFrags(:,5:6)-repmat(endPoint,size(relevantFrags,1
 nearFrags = relevantFrags(nearFragsID,:);
 
 % remove fragments from the same curve
-[~, idx, ~] = unique(nearFrags(:,1:2),'rows');
+[~, idx, ~] = unique(nearFrags(:,[1,2,8]),'rows');
 nearFrags = nearFrags(idx,:);
 end
 
@@ -154,16 +155,17 @@ relevantFrags = cat(1,frags{matchAngularLimitsBins(1):matchAngularLimitsBins(2),
 % 5. End point X relative to start
 % 6. End point Y relative to start
 % 7. End point orientation relative to start
-% 8. Angle of vector to endPoint from X axis
+% 8. Annotator number
+% 9. Angle of vector to endPoint from X axis
 
 % filter (keep) the relevant (close enough) frags
-nearFragsID = relevantFrags(:,8) > matchAngularLimits(1) & ...
-    relevantFrags(:,8) < matchAngularLimits(2) & ...
+nearFragsID = relevantFrags(:,9) > matchAngularLimits(1) & ...
+    relevantFrags(:,9) < matchAngularLimits(2) & ...
     angularDist(relevantFrags(:,7), endPointOr) < params.matchOr;
 nearFrags = relevantFrags(nearFragsID,:);
 
 % remove fragments from the same curve
-[~, idx, ~] = unique(nearFrags(:,1:2),'rows');
+[~, idx, ~] = unique(nearFrags(:,[1,2,8]),'rows');
 nearFrags = nearFrags(idx,:);
 
 end
