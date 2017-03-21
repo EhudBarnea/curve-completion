@@ -185,7 +185,10 @@ function nearFrags = getNearFragsSI_withCurva(endPoint, endPointOr, frags, param
 
 nearFrags = getNearFragsSI(endPoint, endPointOr, frags, params);
 
+% curvature at inducer points
 indCurva = [0,0]; % line
+
+
 % the arc length to use for the curvature calculation (by circle fitting)
 % is determined is the distance between the two inducers divided by this
 % amount.
@@ -201,12 +204,14 @@ for i=1:toUse
     cNum = nearFrags(i,2); % curve num
     fragP1 = nearFrags(i,3);
     fragP2 = nearFrags(i,4);
+    fragP2 = nearFrags(i,4);
+    annotatorNum = nearFrags(i,8);
     
     % load curves
     imgName = params.imgNames{imgNum};
     baseName = imgName(1:end-4);
     data = load([params.curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{1}; % use set 1 (each set is a different annotator)
+    curves = data.groundTruth{annotatorNum};
     c = fixCurve(curves{cNum}, params.imgSizes(imgNum,:));
     
     % transform to canonincal pose
@@ -219,7 +224,7 @@ for i=1:toUse
     fragPtsAll = fragPtsAll(1:end-1,:);
     fragPts = stretchCurve(fragPts, endPoint);
     
-    center(i,:) = fragPts(floor(size(fragPts,1)/2),:);
+    center(i,:) = getCurveEquiPoints(fragPts, 1);
     
     % get curvature points (to calculate the curvature between them)
     cvp1=[0,0];

@@ -19,13 +19,15 @@ tooLongFrags = 0;
 while(true)
     % randomly pick image
     i = floor(rand*numImgs + 1);
+    % randomly pick annotator
+    annotatorNum = randi(3);
     
     % load image curves
     imgName = imgNames{i};
     baseName = imgName(1:end-4);
     imgSize = imgSizes(i,:);
     data = load([curvesFolder baseName],'groundTruth');
-    curves = data.groundTruth{1}; % use set 1 (each set is probably a different annotator)
+    curves = data.groundTruth{annotatorNum}; % use set 1 (each set is probably a different annotator)
     
     
     % randomly pick a curve.
