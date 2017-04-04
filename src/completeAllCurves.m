@@ -58,6 +58,9 @@ for or2i=1:numel(orRange)
 %         ylim([-230 50]); 
         xlim([-250 250]);
         ylim([-300 80]);
+        if p2i==1
+            removeFigureMargin();
+        end
         saveas(gcf,[params.outFolder 'completions/tmp/all_' num2str(or2) '.png']);
         % visualize curves and statistics
         if false

@@ -36,6 +36,8 @@ for i=1:numConfigs
         axis equal
         xlim([-250 250]);
         ylim([-300 80]);
+        removeFigureMargin();
+        
         saveas(gcf,[params.outFolder 'completions/tmp/all_' num2str(endPointOr) '.png']);
         close all;
     end
