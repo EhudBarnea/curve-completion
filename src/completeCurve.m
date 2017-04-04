@@ -11,12 +11,12 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 % out.numDiffImgs - number of images from which the used fragments were taken from
 % out.fragCenters - center points of all fragments observed between the two inducers
 
-maxFragsToUse = 300;
-% maxFragsToUse = inf;
+% maxFragsToUse = 300;
+maxFragsToUse = inf;
 % maxFragsToShow = 10;
 maxFragsToShow = 5;
-% numCurveRepPts = 3;
-numCurveRepPts = 16;
+% numCurveRepPts = 16;
+numCurveRepPts = 30;
 
 
 c = [];
@@ -24,7 +24,7 @@ out = [];
 
 % vis - visualize completion process
 if vis
-    figure
+%     figure
 end
 
 % get p2 and or2 in relative to p1 and or1
@@ -100,8 +100,8 @@ for i=1:numFragsToUse
     
     % display
     if vis && i<=maxFragsToShow
-        line(fragPts(:,1),fragPts(:,2),'Color','k');
-        hold on
+%         line(fragPts(:,1),fragPts(:,2),'Color','k');
+%         hold on
         % ---- show each fragment in its own image
         %         axis equal
         %         axis([-200 200 -200 200])
@@ -128,15 +128,19 @@ c = [0,0; c; endPoint];
 
 if vis
     % draw mean curve
-    scatter(c(:,1),c(:,2),7,'r','filled');
-    %     line(meanPts(:,1),meanPts(:,2),'Color','r');
-    plot(c(:,1), c(:,2), 'Color', 'r');
+%     scatter(c(:,1),c(:,2),7,'b','filled'); % draw completion points
+%     curveColor = [0,0,0.5];
+    maxNum = 800;
+    cmap = colormap(winter(maxNum));
+    cmap=flipud(cmap);
+    curveColor = cmap(min(numFragsToUse,maxNum),:);
+    plot(c(:,1), c(:,2), 'Color', curveColor, 'LineWidth' , 1); % draw completed curve
     
     hold on
-    visInducers([0, 0], 0, endPoint, endPointOr, true);
+    visInducers([0, 0], 0, endPoint, endPointOr, false);
 %     scatter(0,0,7,'r','filled')
 %     hold on
-%     scatter(endPoint(1),endPoint(2),7,'r','filled')
+%     scatter(endPoint(1),endPoint(2),7,'b','filled')
     axis equal
     axis([-200 200 -200 200])
     title(['Num shown curves = ' num2str(min(maxFragsToShow,numFragsToUse)) '   Num used curves = ' num2str(numFragsToUse) '   num Diff Imgs=' num2str(numDiffImgs)])
