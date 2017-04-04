@@ -1,4 +1,4 @@
-function [c, isUsable, out, fragCenters] = completeCurve(p1, or1, p2, or2, frags, params, vis)
+function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis)
 % complete curve between points p1,p2 with orientations or1,or2
 
 % input:
@@ -63,7 +63,6 @@ if numFrags < 1
     return;
 end
 
-
 % shuffle curves
 idx = randperm(numFrags);
 endPointFrags = endPointFrags(idx,:);
@@ -71,9 +70,7 @@ endPointFrags = endPointFrags(idx,:);
 allRepPts = zeros(numFragsToUse,numCurveRepPts*2); % all curves' representative points
 % times 2 because each point is x,y
 
-if calcCenters
-    fragCenters = zeros(numFragsToUse, 2); % center points of all fragments
-end
+fragCenters = zeros(numFragsToUse, 2); % center points of all fragments
 
 fragImgs = false(params.numImgs,1); % images with such curves
 for i=1:numFragsToUse
@@ -105,10 +102,7 @@ for i=1:numFragsToUse
     allRepPts(i,:) = reshape(repPts,1,numCurveRepPts*2);
     
     % get frag center
-    if calcCenters
-        3
-        fragCenters(i,:) = getCurveEquiPoints(fragPts, 1);
-    end
+    fragCenters(i,:) = getCurveEquiPoints(fragPts, 1);
     
     % display
     if vis && i<=maxFragsToShow
@@ -128,6 +122,7 @@ numDiffImgs = sum(fragImgs);
 isUsable = numFragsToUse>=20;
 
 % prepare output struct
+out.fragCenters = fragCenters;
 out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
 

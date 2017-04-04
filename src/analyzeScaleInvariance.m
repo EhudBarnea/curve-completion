@@ -57,8 +57,7 @@ for s=31:32%minScale:maxScale % loop over scales
     x = p2(1);
     y = p2(2);
     
-    [c, isUsable, out, fragCenters] = completeCurve(p1, or1, p2, or2, frags, params, false);
-    out.fragCenters = fragCenters;
+    [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, false);
     if isUsable
         % keep number of fragments
         fragsPerScale(s) = out.numFrags;
