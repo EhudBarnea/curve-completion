@@ -75,8 +75,12 @@ end
 params.matchOr = 4*pi/180;
 params.matchSI = true; % match in a scale invariant way
 
-% set jet colormap
-% set(groot,'DefaultFigureColormap',jet)
+% params for curve generation assuming extensibility 
+params.extensible = true;
+params.numMinFrags = 400;
+if params.extensible
+    params.matchOr = 0.8*pi/180;
+end
 
 %% train / collect data
 

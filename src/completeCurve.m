@@ -129,8 +129,30 @@ out.numFrags = numFrags;
 % calculate completion curve
 c = genCurveMean(allRepPts, numCurveRepPts, params);
 % c = genCurveKDE(allRepPts, numCurveRepPts, params);
-
 c = [0,0; c; endPoint];
+
+% split the curve into two parts if not enough samples
+if params.extensible && numFrags<params.numMinFrags
+    % Get mean center points and orientations
+    splitPointIdx = floor(size(c,1))/2;
+    splitPoint = c(splitPointIdx,:);
+    d=10;
+    splitPointBefore = c(splitPointIdx-d,:);
+    splitPointAfter = c(splitPointIdx+d,:);
+    splitOr1 = getOrTwoPts(splitPointAfter, splitPointBefore);
+    splitOr2 = getOrTwoPts(splitPointBefore, splitPointAfter);
+    
+    params.extensible = false;
+    [c1,~,out1] = completeCurve(p1, or1, splitPoint, splitOr1, frags, params, false);
+    [c2,~,out2] = completeCurve(splitPoint, splitOr2, p2, or2, frags, params, false);
+    c = [c1; c2(2:end,:)];
+    numFrags = min([out1.numFrags, out2.numFrags]);
+%     scatter(splitPoint(1),splitPoint(2),150,'r')
+%     hold on
+end
+
+
+
 
 if vis
     % draw mean curve
@@ -139,7 +161,7 @@ if vis
     maxNum = 800;
     cmap = colormap(winter(maxNum));
     cmap=flipud(cmap);
-    curveColor = cmap(min(numFragsToUse,maxNum),:);
+    curveColor = cmap(min(numFrags,maxNum),:);
     plot(c(:,1), c(:,2), 'Color', curveColor, 'LineWidth' , 1); % draw completed curve
     
     hold on
