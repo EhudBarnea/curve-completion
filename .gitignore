@@ -1,15 +1,6 @@
 
 # data and others
 data/*
-misc/*
-
-# export_fig library
-src/export_fig/*
-!src/export_fig/where_to_get.md
-
-# kde2d library
-src/kde2d/*
-!src/kde2d/where_to_get.md
 
 
 # Matlab temp/backup files
