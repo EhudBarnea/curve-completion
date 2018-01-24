@@ -9,6 +9,7 @@ completions = dlmread([params.outFolder 'completions/libcornu_completions.txt'])
 
 numConfigs = 19*8;
 numPts = 200;
+counter = 1;
 for i=1:numConfigs
     
     % get completion points
@@ -20,7 +21,9 @@ for i=1:numConfigs
     endPoint = completions(ptsStart-1,3:4);
     endPointOr = completions(ptsStart-1,5);
     
-    % flip second inducer orientation
+    % flip second inducer orientation - in libcornu it resembles the
+    % continuation of the curve, not point to the curve as in my
+    % implementation
     endPointOr = mod(endPointOr + pi,2*pi);
     
     % draw curve
@@ -34,12 +37,32 @@ for i=1:numConfigs
     
     if mod(i,19) == 0
         axis equal
+%         set(gca,'xtick',[])
+        set(gca,'xticklabel',[])
+        set(gca,'yticklabel',[])
+%         axis off
         xlim([-250 250]);
         ylim([-300 80]);
-        removeFigureMargin();
+        set(gca,'FontSize',12,'FontWeight','bold','linewidth',2)
+%         removeFigureMargin();
+        % -- fix margin when printing to pdf
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        % --
         
-        saveas(gcf,[params.outFolder 'completions/tmp/all_' num2str(endPointOr) '.png']);
+%         colorbar; 
+%         saveas(gcf,[params.outFolder 'completions/euler_sprial/' num2str(counter) '.eps'], 'epsc2');
+        numOut = counter;
+        if numOut < 5
+            numOut = numOut + 4;
+        else
+            numOut = numOut - 4;
+        end
+        print(fig, '-dpdf', '-r600', [params.outFolder 'completions/euler_sprial/' num2str(numOut) '.pdf'])
         close all;
+        counter = counter + 1;
     end
 end
 

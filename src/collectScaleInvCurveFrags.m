@@ -1,21 +1,26 @@
-function [] = collectScaleInvCurveFrags(frags, params)
+function [] = collectScaleInvCurveFrags(frags, imgNums, params)
 % Collect curve fragments in a scale invariant way
-
+% img_nums - list of image numbers from which to draw curves (training
+% images)
 
 
 fragsSIcounts = [];
 % Count number of rows for preallocation
-[~, fragsSIcounts] = collectAndCount(frags, fragsSIcounts, params);
+[~, fragsSIcounts] = collectAndCount(frags, imgNums, fragsSIcounts, params);
 % Collect data in preallocated cell array
-[fragsSI, ~] = collectAndCount(frags, fragsSIcounts, params);
+[fragsSI, ~] = collectAndCount(frags, imgNums, fragsSIcounts, params);
 
 
 disp('saving')
-save([params.outFolder 'all_frags/fragsSI.mat'],'fragsSI','-v7.3');
+if isempty(imgNums)
+    save([params.outFolder 'all_frags/fragsSI.mat'],'fragsSI','-v7.3');
+else
+    save([params.outFolder 'all_frags/fragsSI_train.mat'],'fragsSI','-v7.3');
+end
 disp('done')
 end
 
-function [fragsSI, counts] = collectAndCount(frags, fragsSIcounts, params)
+function [fragsSI, counts] = collectAndCount(frags, imgNums, fragsSIcounts, params)
 
 onlyCount = false;
 if isempty(fragsSIcounts)
@@ -48,6 +53,11 @@ for i = 1:numel(frags)
         endPoint = frags{i}(j,5:6);
         endPointOr = frags{i}(j,7);
         annotatorNum = frags{i}(j,8);
+        
+        % ignore curves from unwanted images
+        if ~isempty(imgNums) && ~ismember(imgNum, imgNums)
+            continue;
+        end
         
         % Get angular location bin of end point.
         % Discretize the [pi,2*pi] region into bins

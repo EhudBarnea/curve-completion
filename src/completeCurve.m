@@ -9,14 +9,11 @@ function [c, isUsable, out] = completeCurve(p1, or1, p2, or2, frags, params, vis
 % out - output struct containing.
 % out.numFrags - total number of fragments observed between the two inducers
 % out.numDiffImgs - number of images from which the used fragments were taken from
+% out.fragRepPts - rep points of all fragments observed between the two inducers
 % out.fragCenters - center points of all fragments observed between the two inducers
 
-% maxFragsToUse = 300;
-maxFragsToUse = inf;
 % maxFragsToShow = 10;
 maxFragsToShow = 5;
-% numCurveRepPts = 16;
-numCurveRepPts = 30;
 
 
 c = [];
@@ -57,7 +54,7 @@ if params.matchSI
 end
 
 numFrags = size(endPointFrags,1);
-numFragsToUse = min(numFrags, maxFragsToUse);
+numFragsToUse = min(numFrags, params.maxFragsToUse);
 if numFrags < 1
     isUsable = false;
     return;
@@ -67,7 +64,7 @@ end
 idx = randperm(numFrags);
 endPointFrags = endPointFrags(idx,:);
 
-allRepPts = zeros(numFragsToUse,numCurveRepPts*2); % all curves' representative points
+allRepPts = zeros(numFragsToUse,params.numCurveRepPts*2); % all curves' representative points
 % times 2 because each point is x,y
 
 fragCenters = zeros(numFragsToUse, 2); % center points of all fragments
@@ -98,8 +95,8 @@ for i=1:numFragsToUse
     fragImgs(imgNum) = true;
     
     % get representative points
-    repPts = getCurveEquiPoints(fragPts, numCurveRepPts);
-    allRepPts(i,:) = reshape(repPts,1,numCurveRepPts*2);
+    repPts = getCurveEquiPoints(fragPts, params.numCurveRepPts);
+    allRepPts(i,:) = reshape(repPts,1,params.numCurveRepPts*2);
     
     % get frag center
     fragCenters(i,:) = getCurveEquiPoints(fragPts, 1);
@@ -122,19 +119,20 @@ numDiffImgs = sum(fragImgs);
 isUsable = numFragsToUse>=20;
 
 % prepare output struct
+out.fragRepPts = allRepPts;
 out.fragCenters = fragCenters;
 out.numDiffImgs = numDiffImgs;
 out.numFrags = numFrags;
 
 % calculate completion curve
-c = genCurveMean(allRepPts, numCurveRepPts, params);
-% c = genCurveKDE(allRepPts, numCurveRepPts, params);
+c = genCurveMean(allRepPts, params);
 c = [0,0; c; endPoint];
 
 % split the curve into two parts if not enough samples
 if params.extensible && numFrags<params.numMinFrags
+%     fprintf('calculating extensible curve, %d\n',numFrags);
     % Get mean center points and orientations
-    splitPointIdx = floor(size(c,1))/2;
+    splitPointIdx = floor(size(c,1)/2)+1;
     splitPoint = c(splitPointIdx,:);
     d=10;
     splitPointBefore = c(splitPointIdx-d,:);
@@ -142,9 +140,11 @@ if params.extensible && numFrags<params.numMinFrags
     splitOr1 = getOrTwoPts(splitPointAfter, splitPointBefore);
     splitOr2 = getOrTwoPts(splitPointBefore, splitPointAfter);
     
-    params.extensible = false;
-    [c1,~,out1] = completeCurve(p1, or1, splitPoint, splitOr1, frags, params, false);
-    [c2,~,out2] = completeCurve(splitPoint, splitOr2, p2, or2, frags, params, false);
+    paramsExt = params;
+    paramsExt.extensible = false;
+    paramsExt.matchOr = paramsExt.extMatchOr;
+    [c1,~,out1] = completeCurve([0,0], 0, splitPoint, splitOr1, frags, paramsExt, false);
+    [c2,~,out2] = completeCurve(splitPoint, splitOr2, endPoint, endPointOr, frags, paramsExt, false);
     c = [c1; c2(2:end,:)];
     numFrags = min([out1.numFrags, out2.numFrags]);
 %     scatter(splitPoint(1),splitPoint(2),150,'r')
@@ -158,11 +158,32 @@ if vis
     % draw mean curve
 %     scatter(c(:,1),c(:,2),7,'b','filled'); % draw completion points
 %     curveColor = [0,0,0.5];
-    maxNum = 800;
-    cmap = colormap(winter(maxNum));
+    maxNum = 300;
+%     minNum = 30;
+    minNum = 0;
+    cmap = colormap(winter(maxNum-minNum+1));
     cmap=flipud(cmap);
-    curveColor = cmap(min(numFrags,maxNum),:);
+    colormap(cmap);
+    tmpFrags = numFrags;
+    if tmpFrags>maxNum
+        tmpFrags=maxNum;
+    end
+    if tmpFrags<minNum
+        tmpFrags=minNum;
+    end
+%     tmpFrags
+%     caxis manual
+    caxis([minNum maxNum]);
+    curveColor = cmap(tmpFrags-minNum+1,:);
     plot(c(:,1), c(:,2), 'Color', curveColor, 'LineWidth' , 1); % draw completed curve
+    
+    % -- colorbar
+    hcb=colorbar;
+    tcks = hcb.Ticks;
+    tcks=num2cell(tcks);
+    tcks{end}=['>' num2str(tcks{end})];
+    set(hcb,'TickLabels',tcks)
+    % --
     
     hold on
     visInducers([0, 0], 0, endPoint, endPointOr, false);
@@ -184,40 +205,18 @@ c = transBackPoints(c, p1, or1);
 
 end
 
-function curvePts = genCurveMean(allRepPts, numCurveRepPts, params)
+function curvePts = genCurveMean(allRepPts, params)
 % Generate curve using a set of curves as their mean curve points, i.e.,
 % each point in the curve is a mean of all the other corresponding points.
 
 % allRepPts - the set of representative points of the curves to use. This
 % is an array of NxM where N is the number of curves and M is
-% numCurveRepPts*2 (for x and y).
-% numCurveRepPts - the number of representative points of each curve
+% params.numCurveRepPts*2 (for x and y).
 
 meanPts = mean(allRepPts,1);
-meanPts = reshape(meanPts, numCurveRepPts, 2);
+meanPts = reshape(meanPts, params.numCurveRepPts, 2);
 
 curvePts = meanPts;
-end
-
-
-function curvePts = genCurveKDE(allRepPts, numCurveRepPts, params)
-% Generate curve using a set of curves as the maximum of the curve
-% distribution calculated using KDE.
-
-% allRepPts - the set of representative points of the curves to use. This
-% is an array of NxM where N is the number of curves and M is
-% numCurveRepPts*2 (for x and y).
-% numCurveRepPts - the number of representative points of each curve
-
-
-densityGridSize = 2^8;
-
-
-i=3;
-[~,density,X2,Y2]=kde2d_updated(allRepPts(:,i*2:i*2+1), densityGridSize, [params.relMinX, params.relMinY], [params.relMaxX, params.relMaxY], 0.00002);
-
-
-curvePts = [];
 end
 
 

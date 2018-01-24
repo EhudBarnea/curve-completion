@@ -24,7 +24,7 @@ imgSizes = params.imgSizes;
 curvesFolder = params.curvesFolder;
 outFolder = params.outFolder;
 
-% for i = 1:1:numImgs
+% for i = 1:numImgs
 parfor i = 1:numImgs
     disp([num2str(i) ' started']);
     
