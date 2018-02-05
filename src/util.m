@@ -276,7 +276,9 @@ lgd.FontSize = 16;
 
 disp('done')
 
-%% Visualize spiral completions over test set
+%% Visualize completions over test set
+
+lineWidth = 1;
 
 % load test set
 data = load(params.testSetFilename,'testSet');
@@ -292,34 +294,55 @@ for i=1:length(testCurves)
     testCompletions_spiral{i} = testCompletions_spiralMat(s:e,:);
 end
 
-for i = 1:numel(testCurves) %1:numel(testCurves)
+% load mean curve reconstruction results
+data = load([params.outFolder 'test_set/testSet_completions_meancurve.mat'], 'testCompletions');
+% data = load([params.outFolder 'test_set/testSet_diff_completions_meancurve.mat'], 'testCompletions');
+testCompletions_meanCurve = data.testCompletions;
+
+for i = 1:numel(testCurves)
     i
+    
+    % get image
+    imgName = [params.datasetFolder 'img/' testCurves{i}.imgName];
+    img = imread(imgName);
+    imshow(img)
+    
+    % get gt curve
+    gt = testCurves{i}.pts(testCurves{i}.p1:testCurves{i}.p2,:);
+    % flip y axis
+    gt(:,2) = size(img,1) - gt(:,2) + 1;
     
     % get inducers
     p1 = testCurves{i}.pts(testCurves{i}.p1, :);
     p2 = testCurves{i}.pts(testCurves{i}.p2, :);
     or1 = testCurves{i}.p1Or;
     or2 = testCurves{i}.p2Or;
+    % flip y axis
+    p1(2) = size(img,1) - p1(2) + 1;
+    p2(2) = size(img,1) - p2(2) + 1;
+    scale = int32(norm(p1 - p2));
     
-    % get gt curve
-    gt = testCurves{i}.pts(testCurves{i}.p1:testCurves{i}.p2,:);
-    
-    % get spiral completion
-    c = testCompletions_spiral{i};
+    % get completions
+    c_spiral = testCompletions_spiral{i};
+    c_meanCurve = testCompletions_meanCurve{i};
+    % flip y axis
+    c_spiral(:,2) = size(img,1) - c_spiral(:,2) + 1;
+    c_meanCurve(:,2) = size(img,1) - c_meanCurve(:,2) + 1;
     
     % calculate reconstruction error
-    [error, relError] = curve_dist(gt, c);
+%     [error, relError] = curve_dist(gt, c_spiral);
+%     title(['Error = ' num2str(error) ' Relative error = ' num2str(relError)])
     
-    line(c(:,1),c(:,2),'color','blue','LineWidth',2);
+    line(gt(:,1),gt(:,2),'color','magenta','LineWidth',lineWidth);
     hold on
-    line(gt(:,1),gt(:,2),'color','k','LineWidth',2);
+    line(c_spiral(:,1),c_spiral(:,2),'color','blue','LineWidth',lineWidth);
     hold on
-    visInducers(p1, or1, p2, or2);
-    axis([1 481 1 481]);
-    title(['Error = ' num2str(error) ' Relative error = ' num2str(relError)])
-    saveas(gcf,[params.outFolder 'test_set/gt_vs_spiral/' num2str(i) '.png']);
+    line(c_meanCurve(:,1),c_meanCurve(:,2),'color','green','LineWidth',lineWidth);
+    hold on
+    
+%     visInducers(p1, or1, p2, or2);
+    saveas(gcf,[params.outFolder 'test_set/gt_vs_completions/' num2str(scale) '_' num2str(i) '.png']);
     close all
-    
 end
 
 
