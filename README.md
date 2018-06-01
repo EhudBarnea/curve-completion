@@ -1,5 +1,6 @@
 # CurveCompletion
-Curve completion based on the statistics of curves
+Curve completion based on the statistics of natural curves: <br>
+Barnea E. and Ben-Shahar O., Curve Reconstruction via the Global Statistics of Natural Curves, CVPR 2018
 
 
 Running the code:
